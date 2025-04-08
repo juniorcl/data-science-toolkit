@@ -362,6 +362,6 @@ class AutoMLLightGBMRegressorCV:
 
     def get_model_analysis(self) -> None:
     
-        analyze_model("base_model", self.base_model, self.base_model_results, self.X_train, self.y_test, self.target)
-        analyze_model("best_feature_model", self.best_feature_model, self.best_feature_model_results, self.X_train, self.y_test, self.target)
-        analyze_model("best_params_model", self.best_params_model, self.best_params_model_results, self.X_train, self.y_test, self.target)
+        analyze_model("base_model", self.base_model, self.base_model_results, self.X_train, self.y_train, self.y_test, self.target)
+        analyze_model("best_feature_model", self.best_feature_model, self.best_feature_model_results, self.X_train, self.y_train, self.y_test, self.target)
+        analyze_model("best_params_model", self.best_params_model, self.best_params_model_results, self.X_train, self.y_train, self.y_test, self.target)
