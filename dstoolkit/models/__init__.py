@@ -1,6 +1,7 @@
-from .lightgbm.lightgbm import AutoMLLightGBMRegressor
+from .lightgbm.regressor import AutoMLLightGBMRegressor, AutoMLLightGBMRegressorCV
 
 
 __all__ = [
-    "AutoMLLightGBMRegressor"
+    "AutoMLLightGBMRegressor",
+    "AutoMLLightGBMRegressorCV"
 ]
