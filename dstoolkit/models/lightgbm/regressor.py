@@ -313,8 +313,12 @@ class AutoMLLightGBMRegressorCV:
                 'random_state': 42,
                 'verbose': -1,
             }
+
+            cv_results = cross_validate(
+                estimator=LGBMRegressor(**params), cv=self.cv, n_jobs=-1, scoring='r2',
+                X=self.X_train[self.best_features], y=self.y_train[self.target])
             
-            return self._cross_validate(LGBMRegressor(**params), self.best_features)['R2']
+            return cv_results['test_score'].mean()
 
         optuna.logging.set_verbosity(optuna.logging.WARNING)
         
