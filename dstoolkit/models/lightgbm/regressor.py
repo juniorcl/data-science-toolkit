@@ -8,21 +8,20 @@ from lightgbm import LGBMRegressor
 from sklearn.model_selection import cross_validate
 
 from ..metrics import (
-    ks_scorer, 
-    summarize_metric_results, 
+    ks_scorer,  
     analyze_model, 
     get_regressor_metrics,
     get_eval_scoring
 )
 
-from ..analysis import analyze_model
+from ..analysis import analyze_model, summarize_metric_results
 
 
-def get_default_model(random_state=42, n_jobs=-1) -> LGBMRegressor:
+def get_default_model(random_state=42) -> LGBMRegressor:
     
-    return LGBMRegressor(random_state=random_state, n_jobs=n_jobs, verbose=-1)
+    return LGBMRegressor(random_state=random_state, verbose=-1)
 
-def get_objective_params(trial, random_state=42, n_jobs=-1) -> dict:
+def get_objective_params(trial, random_state=42) -> dict:
 
     return {
         'objective': trial.suggest_categorical('objective', ['regression']),
@@ -38,8 +37,7 @@ def get_objective_params(trial, random_state=42, n_jobs=-1) -> dict:
         'lambda_l1': trial.suggest_float('lambda_l1', 1e-8, 10.0, log=True),
         'lambda_l2': trial.suggest_float('lambda_l2', 1e-8, 10.0, log=True),
         'random_state': trial.suggest_categorical('random_state', [random_state]),
-        'verbose': trial.suggest_categorical('verbose', [-1]),
-        'n_jobs': trial.suggest_categorical('n_jobs', [n_jobs])
+        'verbose': trial.suggest_categorical('verbose', [-1])
     }
 
 
@@ -47,7 +45,7 @@ class AutoMLLGBMRegressor:
     
     def __init__(
         self, X_train: pd.DataFrame, y_train: pd.DataFrame, X_valid: pd.DataFrame, y_valid: pd.DataFrame, X_test: pd.DataFrame, y_test: pd.DataFrame, 
-        best_features: list[str], target: str, scoring = str, n_trials: int = 50, random_state: int = 42, n_jobs: int = -1):
+        best_features: list[str], target: str, scoring = str, n_trials: int = 50, random_state: int = 42):
 
         self.X_train = X_train
         self.y_train = y_train
@@ -61,7 +59,6 @@ class AutoMLLGBMRegressor:
         self.scorer = get_eval_scoring(scoring, return_func=False)
         self.func_metric = get_eval_scoring(scoring, return_func=True)
         self.random_state = random_state
-        self.n_jobs = n_jobs
 
     def _train_model(self, model_name: str, features: list[str], model: LGBMRegressor) -> tuple[LGBMRegressor, dict[str, dict[str, float]]]:
         
@@ -84,13 +81,13 @@ class AutoMLLGBMRegressor:
 
     def _train_base_model(self) -> dict[str, dict[str, float]]:
         
-        model = get_default_model(random_state=self.random_state, n_jobs=self.n_jobs)
+        model = get_default_model(random_state=self.random_state)
         
         return self._train_model('base_model', self.X_train.columns.tolist(), model)
 
     def _train_best_feature_model(self) -> dict[str, dict[str, float]]:
         
-        model = get_default_model(random_state=self.random_state, n_jobs=self.n_jobs)
+        model = get_default_model(random_state=self.random_state)
         
         return self._train_model('best_feature_model', self.best_features, model)
 
@@ -98,7 +95,7 @@ class AutoMLLGBMRegressor:
         
         def objective(trial):
             
-            params = get_objective_params(trial, self.random_state, self.n_jobs)
+            params = get_objective_params(trial, self.random_state)
             
             model = LGBMRegressor(**params)
             model.fit(
@@ -153,7 +150,7 @@ class AutoMLLGBMRegressorCV:
     
     def __init__(
         self, X_train: pd.DataFrame, y_train: pd.DataFrame, X_test: pd.DataFrame, y_test: pd.DataFrame, 
-        best_features: list[str], target: str, scoring: str, n_trials: int = 50, cv: int = 5, random_state: int = 42, n_jobs: int = -1):
+        best_features: list[str], target: str, scoring: str, n_trials: int = 50, cv: int = 5, random_state: int = 42):
 
         self.X_train = X_train
         self.y_train = y_train
@@ -165,13 +162,22 @@ class AutoMLLGBMRegressorCV:
         self.cv = cv
         self.scorer = get_eval_scoring(scoring, return_func=False)
         self.random_state = random_state
-        self.n_jobs = n_jobs
 
     def _cross_validate(self, model: LGBMRegressor, features: list[str]) -> None:
 
         cv_results = cross_validate(
-            estimator=model, X=self.X_train[features], y=self.y_train[self.target], cv=self.cv, n_jobs=self.n_jobs,
-            scoring=('r2', 'neg_mean_absolute_error', 'neg_median_absolute_error', 'neg_mean_absolute_percentage_error', 'neg_root_mean_squared_error', 'explained_variance')
+            estimator=model, 
+            X=self.X_train[features], 
+            y=self.y_train[self.target], 
+            cv=self.cv,
+            scoring=(
+                'r2', 
+                'neg_mean_absolute_error', 
+                'neg_median_absolute_error', 
+                'neg_mean_absolute_percentage_error', 
+                'neg_root_mean_squared_error', 
+                'explained_variance'
+            )
         )
 
         return {
@@ -201,10 +207,10 @@ class AutoMLLGBMRegressorCV:
         
         def objective(trial):
             
-            params = get_objective_params(trial, self.random_state, self.n_jobs)
+            params = get_objective_params(trial, self.random_state)
 
             cv_results = cross_validate(
-                estimator=LGBMRegressor(**params), cv=self.cv, n_jobs=self.n_jobs, scoring=self.scorer,
+                estimator=LGBMRegressor(**params), cv=self.cv, scoring=self.scorer,
                 X=self.X_train[self.best_features], y=self.y_train[self.target])
 
             return cv_results['test_score'].mean()
@@ -218,13 +224,13 @@ class AutoMLLGBMRegressorCV:
 
     def _train_base_model(self) -> tuple[LGBMRegressor, dict[str, dict[str, float]]]:
         
-        model = get_default_model(random_state=self.random_state, n_jobs=self.n_jobs)
+        model = get_default_model(random_state=self.random_state)
         
         return self._train_model('base_model', self.X_train.columns.tolist(), model)
 
     def _train_best_feature_model(self) -> tuple[LGBMRegressor, dict[str, dict[str, float]]]:
 
-        model = get_default_model(random_state=self.random_state, n_jobs=self.n_jobs)
+        model = get_default_model(random_state=self.random_state)
 
         return self._train_model('best_feature_model', self.best_features, model)
 

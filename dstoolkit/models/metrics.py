@@ -79,17 +79,6 @@ def get_eval_scoring(scoring, return_func=True):
 
     return functions[scoring] if return_func else scorers[scoring]
 
-def summarize_metric_results(results: dict[str, dict[str, float]]) -> pd.DataFrame:
-        
-    rows = []
-    
-    for dataset, metrics_dict in results.items():
-        row = {"Dataset": dataset}
-        row.update(metrics_dict)
-        rows.append(row)
-    
-    return pd.DataFrame(rows)
-
 def analyze_model(model_name: str, model: BaseEstimator, results: dict, X_train: pd.DataFrame, y_train: pd.DataFrame, y_test: pd.DataFrame, target: str) -> None:
     
     print(f"{model_name} Results")

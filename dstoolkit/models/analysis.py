@@ -6,8 +6,6 @@ import seaborn as sns
 
 import matplotlib.pyplot as plt
 
-from .metrics import summarize_metric_results
-
 from sklearn.base            import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics         import roc_curve, precision_recall_curve
 from sklearn.inspection      import permutation_importance
@@ -17,7 +15,7 @@ from sklearn.model_selection import learning_curve, StratifiedKFold, KFold
 
 def plot_permutation_importance(model: BaseEstimator, X: pd.DataFrame, y: pd.DataFrame, scoring: str) -> None:
 
-    permu_results = permutation_importance(model, X[model.feature_name_], y, scoring=scoring, n_repeats=5, n_jobs=-1, random_state=42)
+    permu_results = permutation_importance(model, X[model.feature_name_], y, scoring=scoring, n_repeats=5, random_state=42)
 
     sorted_importances_idx = permu_results.importances_mean.argsort()
     
@@ -102,13 +100,17 @@ def plot_precision_recall_curve(y: pd.DataFrame, prob_col: str, target: str):
     plt.show()
 
 def plot_learning_curve(model: BaseEstimator, X: pd.DataFrame, y: pd.DataFrame, target: str, scoring: str, cv: int = 5):
+
+    if isinstance(model, ClassifierMixin):
+        splitter = StratifiedKFold(cv, shuffle=True, random_state=42)
+    else:
+        splitter = KFold(cv, shuffle=True, random_state=42)
     
     train_sizes_abs, train_scores, val_scores = learning_curve(
         model, X, y[target],
         train_sizes=np.linspace(0.1, 1.0, 5),
-        cv=StratifiedKFold(cv, shuffle=True, random_state=42) if isinstance(model, ClassifierMixin) else KFold(cv, shuffle=True, random_state=42),
-        scoring=scoring,
-        n_jobs=-1
+        cv=splitter,
+        scoring=scoring
     )
 
     train_scores_mean = np.mean(train_scores, axis=1)
@@ -149,6 +151,17 @@ def plot_calibration_curve(y: pd.DataFrame, model_name: str, target: str, n_bins
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+def summarize_metric_results(results: dict[str, dict[str, float]]) -> pd.DataFrame:
+        
+    rows = []
+    
+    for dataset, metrics_dict in results.items():
+        row = {"Dataset": dataset}
+        row.update(metrics_dict)
+        rows.append(row)
+    
+    return pd.DataFrame(rows)
 
 def analyze_model(model_name: str, model: BaseEstimator, results: dict, X_train: pd.DataFrame, y_train: pd.DataFrame, y_test: pd.DataFrame, target: str, scoring: str) -> None:
     

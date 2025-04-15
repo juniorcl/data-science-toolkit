@@ -4,7 +4,7 @@ from .lightgbm.classifier import AutoMLLGBMClassifier, AutoMLLGBMClassifierCV
 
 __all__ = [
     "AutoMLLGBMRegressor",
-    "AutoMLLGBMRegressorCV",
     "AutoMLLGBMClassifier",
+    "AutoMLLGBMRegressorCV",
     "AutoMLLGBMClassifierCV"
 ]
