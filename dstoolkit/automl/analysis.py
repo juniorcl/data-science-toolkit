@@ -200,7 +200,7 @@ def plot_rating_distribution(y: pd.Series, model_name: str, target: str) -> None
         df (pd.DataFrame): DataFrame with the rating and score.
     """
     
-    y.groupby([f'{model_name}_rating'])[[target]].count().plot(kind='bar')
+    y.groupby([f'{model_name}_rating'], observed=True)[target].count().plot(kind='bar')
     
     plt.title(f'Rating Distribution - {model_name}')
     plt.xlabel('Rating')
@@ -217,7 +217,7 @@ def plot_rating(y: pd.Series, model_name: str, target: str) -> None:
         df (pd.DataFrame): DataFrame with the rating and score.
     """
     
-    y.groupby(f'{model_name}_rating')[[target]].mean().plot(kind='bar')
+    y.groupby([f'{model_name}_rating'], observed=True)[target].mean().plot(kind='bar')
     
     plt.title(f'Rating vs Target - {model_name}')
     plt.xlabel('Rating')
