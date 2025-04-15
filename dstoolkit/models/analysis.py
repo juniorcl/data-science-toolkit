@@ -152,6 +152,79 @@ def plot_calibration_curve(y: pd.DataFrame, model_name: str, target: str, n_bins
     plt.tight_layout()
     plt.show()
 
+def prob_to_score(probs: pd.Series, min_score: int = 0, max_score: int = 1000, inverse: bool = False) -> np.array:
+    
+    """
+    Convert probabilities to scores in intervals [min_score, max_score].
+
+    Args:
+        probs (array-like): List of probabilities between 0 and 1.
+        min_score (int): Scor min (default=1).
+        max_score (int): Scor max (default=1000).
+        inverse (bool): If True, probability is high => score is lower (ex: risk).
+
+    Returns:
+        np.array: Scores between min_score and max_score.
+    """
+
+    probs = np.asarray(probs)
+
+    if inverse:
+        probs = 1 - probs
+    
+    scores = min_score + (max_score - min_score) * probs
+    
+    return np.round(scores).astype(int)
+
+def calc_rating_limits(y: pd.Series, n_ratings: int = 5, min_score: int = 0, max_score: int = 1000) -> list[float]:
+    
+    scores = np.asarray(y)
+    
+    quantiles = np.linspace(0, 1, n_ratings + 1)[1:-1]
+    inner_thresholds = np.quantile(scores, quantiles)
+    
+    thresholds = [min_score] + inner_thresholds.tolist() + [max_score]
+
+    return thresholds
+
+def apply_ratings(y: pd.Series, thresholds: list[float], labels: list[str] = None) -> pd.Series:
+  
+    return pd.cut(y, bins=thresholds, labels=labels, include_lowest=True)
+
+def plot_rating_distribution(y: pd.Series, model_name: str, target: str) -> None:
+
+    """
+    Plot the distribution of ratings.
+
+    Args:
+        df (pd.DataFrame): DataFrame with the rating and score.
+    """
+    
+    y.groupby([f'{model_name}_rating'])[[target]].count().plot(kind='bar')
+    
+    plt.title(f'Rating Distribution - {model_name}')
+    plt.xlabel('Rating')
+    plt.ylabel('Count')
+    plt.xticks(rotation=45)
+    plt.show()
+
+def plot_rating(y: pd.Series, model_name: str, target: str) -> None:
+    
+    """
+    Plot the average score for each rating.
+
+    Args:
+        df (pd.DataFrame): DataFrame with the rating and score.
+    """
+    
+    y.groupby(f'{model_name}_rating')[[target]].mean().plot(kind='bar')
+    
+    plt.title(f'Rating vs Target - {model_name}')
+    plt.xlabel('Rating')
+    plt.ylabel('Average Target')
+    plt.xticks(rotation=45)
+    plt.show()
+
 def summarize_metric_results(results: dict[str, dict[str, float]]) -> pd.DataFrame:
         
     rows = []
@@ -180,6 +253,8 @@ def analyze_model(model_name: str, model: BaseEstimator, results: dict, X_train:
         pred_col = f"{model_name}_pred"
         prob_col = f"{model_name}_prob"
         
+        plot_rating(y_test, model_name, target)
+        plot_rating_distribution(y_test, model_name, target)
         plot_roc_curve(y_test, prob_col, target)
         plot_precision_recall_curve(y_test, prob_col, target)
         plot_calibration_curve(y_test, model_name, target, strategy='uniform')

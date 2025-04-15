@@ -14,7 +14,13 @@ from ..metrics import (
     get_eval_scoring
 )
 
-from ..analysis import analyze_model, summarize_metric_results
+from ..analysis import (
+    analyze_model, 
+    summarize_metric_results,
+    prob_to_score,
+    calc_rating_limits,
+    apply_ratings
+)
 
 
 def get_default_model(random_state) -> LGBMClassifier:
@@ -68,8 +74,17 @@ class AutoMLLGBMClassifier:
         )
 
         self.y_train[f'{model_name}_prob'] = model.predict_proba(self.X_train[features])[:, 1]
+        self.y_train[f'{model_name}_score'] = prob_to_score(self.y_train[f'{model_name}_prob'], inverse=True)
+        threshold = calc_rating_limits(self.y_train[f'{model_name}_score'])
+        self.y_train[f'{model_name}_rating'] = apply_ratings(self.y_train[f'{model_name}_score'], threshold)
+
         self.y_valid[f'{model_name}_prob'] = model.predict_proba(self.X_valid[features])[:, 1]
+        self.y_valid[f'{model_name}_score'] = prob_to_score(self.y_valid[f'{model_name}_prob'], inverse=True)
+        self.y_valid[f'{model_name}_rating'] = apply_ratings(self.y_valid[f'{model_name}_score'], threshold)
+        
         self.y_test[f'{model_name}_prob'] = model.predict_proba(self.X_test[features])[:, 1]
+        self.y_test[f'{model_name}_score'] = prob_to_score(self.y_test[f'{model_name}_prob'], inverse=True)
+        self.y_test[f'{model_name}_rating'] = apply_ratings(self.y_test[f'{model_name}_score'], threshold)
 
         results = {
             'Train': get_classifier_metrics(self.y_train, model_name, self.target),
@@ -197,8 +212,14 @@ class AutoMLLGBMClassifierCV:
         model.fit(self.X_train[features], self.y_train[self.target])
         
         self.y_train[f'{model_name}_prob'] = model.predict_proba(self.X_train[features])[:, 1]
+        self.y_train[f'{model_name}_score'] = prob_to_score(self.y_train[f'{model_name}_prob'], inverse=True)
+        threshold = calc_rating_limits(self.y_train[f'{model_name}_score'])
+        self.y_train[f'{model_name}_rating'] = apply_ratings(self.y_train[f'{model_name}_score'], threshold)
+        
         self.y_test[f'{model_name}_prob'] = model.predict_proba(self.X_test[features])[:, 1]
-
+        self.y_test[f'{model_name}_score'] = prob_to_score(self.y_test[f'{model_name}_prob'], inverse=True)
+        self.y_test[f'{model_name}_rating'] = apply_ratings(self.y_test[f'{model_name}_score'], threshold)
+        
         results = {
             'Train CV': self._cross_validate(model, features),
             'Test': get_classifier_metrics(self.y_test, model_name, self.target)
