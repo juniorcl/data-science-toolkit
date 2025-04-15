@@ -1,38 +1,21 @@
-import shap
 import optuna
 
 import numpy   as np
 import pandas  as pd
-import seaborn as sns
 
-import matplotlib.pyplot as plt
-
-from typing   import List, Dict
-from sklearn  import metrics
 from lightgbm import LGBMRegressor
 
-from sklearn.base            import BaseEstimator, RegressorMixin
-from sklearn.model_selection import cross_validate, train_test_split, KFold, StratifiedKFold
+from sklearn.model_selection import cross_validate
 
 from ..metrics import (
     ks_scorer, 
     summarize_metric_results, 
     analyze_model, 
-    get_regressor_metrics, 
-    get_classifier_metrics,
+    get_regressor_metrics,
     get_eval_scoring
 )
 
-from ..analysis import (
-    plot_permutation_importance, 
-    plot_feature_importance, 
-    plot_shap_summary, 
-    plot_residuals, 
-    plot_pred_vs_true,
-    plot_error_by_quantile,
-    plot_learning_curve,
-    analyze_model
-)
+from ..analysis import analyze_model
 
 
 def get_default_model(random_state=42, n_jobs=-1) -> LGBMRegressor:

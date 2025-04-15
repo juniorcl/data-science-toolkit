@@ -1,13 +1,17 @@
 import numpy  as np
 import pandas as pd
 
-from typing   import List, Dict
-from sklearn  import metrics
-from lightgbm import LGBMClassifier, LGBMRegressor
+from scipy.stats  import ks_2samp
+from sklearn.base import BaseEstimator
 
-from scipy.stats             import ks_2samp
-from sklearn.base            import BaseEstimator, ClassifierMixin, RegressorMixin 
-from sklearn.model_selection import StratifiedKFold
+from .analysis import (
+    plot_residuals,
+    plot_pred_vs_true,
+    plot_error_by_quantile,
+    plot_feature_importance,
+    plot_permutation_importance,
+    plot_shap_summary
+)
 
 from sklearn.metrics import (
     r2_score, 
@@ -99,7 +103,6 @@ def analyze_model(model_name: str, model: BaseEstimator, results: dict, X_train:
     plot_feature_importance(model)
     plot_permutation_importance(model, X_train, y_train[target])
     plot_shap_summary(model, X_train)
-    plot_shap_dependence(model, X_train)
 
 def get_regressor_metrics(y: pd.DataFrame, pred_col: str, target: str) -> dict[str, float]:
         

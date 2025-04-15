@@ -6,14 +6,13 @@ import seaborn as sns
 
 import matplotlib.pyplot as plt
 
-from .metrics  import summarize_metric_results
-from lightgbm import LGBMRegressor, LGBMClassifier
+from .metrics import summarize_metric_results
 
 from sklearn.base            import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics         import roc_curve, precision_recall_curve
 from sklearn.inspection      import permutation_importance
 from sklearn.calibration     import calibration_curve
-from sklearn.model_selection import cross_validate, learning_curve, StratifiedKFold, KFold
+from sklearn.model_selection import learning_curve, StratifiedKFold, KFold
 
 
 def plot_permutation_importance(model: BaseEstimator, X: pd.DataFrame, y: pd.DataFrame, scoring: str) -> None:
