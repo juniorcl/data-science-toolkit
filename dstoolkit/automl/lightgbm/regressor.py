@@ -8,7 +8,6 @@ from lightgbm import LGBMRegressor
 from sklearn.model_selection import cross_validate
 
 from ..metrics import (
-    ks_scorer,  
     analyze_model, 
     get_regressor_metrics,
     get_eval_scoring
@@ -141,10 +140,39 @@ class AutoMLLGBMRegressor:
     
     def get_result_analysis(self) -> None:
     
-        analyze_model("base_model", self.base_model, self.base_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-        analyze_model("best_feature_model", self.best_feature_model, self.best_feature_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-        analyze_model("best_params_model", self.best_params_model, self.best_params_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-
+        analyze_model(
+            "base_model", 
+            self.base_model, 
+            self.base_model_results, 
+            self.X_train.columns.tolist(), 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
+        analyze_model(
+            "best_feature_model", 
+            self.best_feature_model, 
+            self.best_feature_model_results, 
+            self.best_features, 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
+        analyze_model(
+            "best_params_model", 
+            self.best_params_model, 
+            self.best_params_model_results,
+            self.best_features, 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
 
 class AutoMLLGBMRegressorCV:
     
@@ -261,6 +289,36 @@ class AutoMLLGBMRegressorCV:
 
     def get_result_analysis(self) -> None:
     
-        analyze_model("base_model", self.base_model, self.base_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-        analyze_model("best_feature_model", self.best_feature_model, self.best_feature_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-        analyze_model("best_params_model", self.best_params_model, self.best_params_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
+        analyze_model(
+            "base_model", 
+            self.base_model, 
+            self.base_model_results, 
+            self.X_train.columns.tolist(), 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
+        analyze_model(
+            "best_feature_model", 
+            self.best_feature_model, 
+            self.best_feature_model_results, 
+            self.best_features, 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
+        analyze_model(
+            "best_params_model", 
+            self.best_params_model, 
+            self.best_params_model_results,
+            self.best_features, 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
