@@ -13,9 +13,9 @@ from sklearn.calibration     import calibration_curve
 from sklearn.model_selection import learning_curve, StratifiedKFold, KFold
 
 
-def plot_permutation_importance(model: BaseEstimator, X: pd.DataFrame, y: pd.DataFrame, scoring: str) -> None:
+def plot_permutation_importance(model: BaseEstimator, features: list, X: pd.DataFrame, y: pd.DataFrame, scoring: str) -> None:
 
-    permu_results = permutation_importance(model, X[model.feature_name_], y, scoring=scoring, n_repeats=5, random_state=42)
+    permu_results = permutation_importance(model, X[features], y, scoring=scoring, n_repeats=5, random_state=42)
 
     sorted_importances_idx = permu_results.importances_mean.argsort()
     
@@ -28,22 +28,23 @@ def plot_permutation_importance(model: BaseEstimator, X: pd.DataFrame, y: pd.Dat
     plt.show()
 
 def plot_feature_importance(model: BaseEstimator) -> None:
-
-    df_imp = pd.DataFrame(model.feature_importances_, model.feature_name_).reset_index()
-    df_imp.columns = ["Variable", "Importance"]
-    df_imp = df_imp.sort_values("Importance", ascending=False)
     
-    sns.barplot(x="Importance", y="Variable", color="#006e9cff", data=df_imp[:20])
-    
-    plt.title(f"Importance of Variables")
-    plt.show() 
+    if hasattr(model, 'feature_importances_'):
+        df_imp = pd.DataFrame(model.feature_importances_, model.feature_name_).reset_index()
+        df_imp.columns = ["Variable", "Importance"]
+        df_imp = df_imp.sort_values("Importance", ascending=False)
 
-def plot_shap_summary(model: BaseEstimator, X: pd.DataFrame) -> None:
+        sns.barplot(x="Importance", y="Variable", color="#006e9cff", data=df_imp[:20])
+
+        plt.title(f"Importance of Variables")
+        plt.show()
+
+def plot_shap_summary(model: BaseEstimator, features: list, X: pd.DataFrame) -> None:
 
     explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X[model.feature_name_])
+    shap_values = explainer.shap_values(X[features])
     
-    shap.summary_plot(shap_values, X[model.feature_name_])
+    shap.summary_plot(shap_values, X[features])
 
 def plot_residuals(y: pd.DataFrame, pred_col: str, target: str) -> None:
         
@@ -236,7 +237,7 @@ def summarize_metric_results(results: dict[str, dict[str, float]]) -> pd.DataFra
     
     return pd.DataFrame(rows)
 
-def analyze_model(model_name: str, model: BaseEstimator, results: dict, X_train: pd.DataFrame, y_train: pd.DataFrame, y_test: pd.DataFrame, target: str, scoring: str) -> None:
+def analyze_model(model_name: str, model: BaseEstimator, results: dict, features: list, X_train: pd.DataFrame, y_train: pd.DataFrame, y_test: pd.DataFrame, target: str, scoring: str) -> None:
     
     print(f"{model_name} Results")
 
@@ -264,5 +265,5 @@ def analyze_model(model_name: str, model: BaseEstimator, results: dict, X_train:
 
     plot_learning_curve(model, X_train, y_train, target, scoring=scoring)
     plot_feature_importance(model)
-    plot_permutation_importance(model, X_train, y_train[target], scoring=scoring)
-    plot_shap_summary(model, X_train)
+    plot_permutation_importance(model, features, X_train, y_train[target], scoring=scoring)
+    plot_shap_summary(model, features, X_train)

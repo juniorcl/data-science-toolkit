@@ -75,16 +75,16 @@ class AutoMLLGBMClassifier:
 
         self.y_train[f'{model_name}_prob'] = model.predict_proba(self.X_train[features])[:, 1]
         self.y_train[f'{model_name}_score'] = prob_to_score(self.y_train[f'{model_name}_prob'], inverse=True)
-        threshold = calc_rating_limits(self.y_train[f'{model_name}_score'])
-        self.y_train[f'{model_name}_rating'] = apply_ratings(self.y_train[f'{model_name}_score'], threshold)
+        self.train_rating_limits = calc_rating_limits(self.y_train[f'{model_name}_score'])
+        self.y_train[f'{model_name}_rating'] = apply_ratings(self.y_train[f'{model_name}_score'], self.train_rating_limits)
 
         self.y_valid[f'{model_name}_prob'] = model.predict_proba(self.X_valid[features])[:, 1]
         self.y_valid[f'{model_name}_score'] = prob_to_score(self.y_valid[f'{model_name}_prob'], inverse=True)
-        self.y_valid[f'{model_name}_rating'] = apply_ratings(self.y_valid[f'{model_name}_score'], threshold)
+        self.y_valid[f'{model_name}_rating'] = apply_ratings(self.y_valid[f'{model_name}_score'], self.train_rating_limits)
         
         self.y_test[f'{model_name}_prob'] = model.predict_proba(self.X_test[features])[:, 1]
         self.y_test[f'{model_name}_score'] = prob_to_score(self.y_test[f'{model_name}_prob'], inverse=True)
-        self.y_test[f'{model_name}_rating'] = apply_ratings(self.y_test[f'{model_name}_score'], threshold)
+        self.y_test[f'{model_name}_rating'] = apply_ratings(self.y_test[f'{model_name}_score'], self.train_rating_limits)
 
         results = {
             'Train': get_classifier_metrics(self.y_train, model_name, self.target),
@@ -156,10 +156,39 @@ class AutoMLLGBMClassifier:
 
     def get_result_analysis(self) -> None:
     
-        analyze_model("base_model", self.base_model, self.base_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-        analyze_model("best_feature_model", self.best_feature_model, self.best_feature_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-        analyze_model("best_params_model", self.best_params_model, self.best_params_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-
+        analyze_model(
+            "base_model", 
+            self.base_model, 
+            self.base_model_results, 
+            self.X_train.columns.tolist(), 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
+        analyze_model(
+            "best_feature_model", 
+            self.best_feature_model, 
+            self.best_feature_model_results, 
+            self.best_features, 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
+        analyze_model(
+            "best_params_model", 
+            self.best_params_model, 
+            self.best_params_model_results,
+            self.best_features, 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
 
 class AutoMLLGBMClassifierCV:
 
@@ -213,12 +242,12 @@ class AutoMLLGBMClassifierCV:
         
         self.y_train[f'{model_name}_prob'] = model.predict_proba(self.X_train[features])[:, 1]
         self.y_train[f'{model_name}_score'] = prob_to_score(self.y_train[f'{model_name}_prob'], inverse=True)
-        threshold = calc_rating_limits(self.y_train[f'{model_name}_score'])
-        self.y_train[f'{model_name}_rating'] = apply_ratings(self.y_train[f'{model_name}_score'], threshold)
+        self.train_rating_limits = calc_rating_limits(self.y_train[f'{model_name}_score'])
+        self.y_train[f'{model_name}_rating'] = apply_ratings(self.y_train[f'{model_name}_score'], self.train_rating_limits)
         
         self.y_test[f'{model_name}_prob'] = model.predict_proba(self.X_test[features])[:, 1]
         self.y_test[f'{model_name}_score'] = prob_to_score(self.y_test[f'{model_name}_prob'], inverse=True)
-        self.y_test[f'{model_name}_rating'] = apply_ratings(self.y_test[f'{model_name}_score'], threshold)
+        self.y_test[f'{model_name}_rating'] = apply_ratings(self.y_test[f'{model_name}_score'], self.train_rating_limits)
         
         results = {
             'Train CV': self._cross_validate(model, features),
@@ -285,6 +314,36 @@ class AutoMLLGBMClassifierCV:
 
     def get_result_analysis(self) -> None:
     
-        analyze_model("base_model", self.base_model, self.base_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-        analyze_model("best_feature_model", self.best_feature_model, self.best_feature_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
-        analyze_model("best_params_model", self.best_params_model, self.best_params_model_results, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
+        analyze_model(
+            "base_model", 
+            self.base_model, 
+            self.base_model_results, 
+            self.X_train.columns.tolist(), 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
+        analyze_model(
+            "best_feature_model", 
+            self.best_feature_model, 
+            self.best_feature_model_results, 
+            self.best_features, 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
+        analyze_model(
+            "best_params_model", 
+            self.best_params_model, 
+            self.best_params_model_results,
+            self.best_features, 
+            self.X_train, 
+            self.y_train, 
+            self.y_test, 
+            self.target, 
+            self.scorer
+        )
