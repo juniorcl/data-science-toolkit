@@ -1,15 +1,21 @@
-from .lightgbm.regressor import AutoMLLGBMRegressor, AutoMLLGBMRegressorCV
-from .lightgbm.classifier import AutoMLLGBMClassifier, AutoMLLGBMClassifierCV
-from .histgradientboosting.regressor import AutoMLHistGradientBoostingRegressor, AutoMLHistGradientBoostingRegressorCV
-from .histgradientboosting.classifier import AutoMLHistGradientBoostingClassifier, AutoMLHistGradientBoostingClassifierCV
+from .supervised.lightgbm.classifier import AutoMLLGBMClassifier, AutoMLLGBMClassifierCV
+from .supervised.lightgbm.regressor import AutoMLLGBMRegressor, AutoMLLGBMRegressorCV
+
+from .supervised.histgradientboosting.classifier import AutoMLHistGradientBoostingClassifier, AutoMLHistGradientBoostingClassifierCV
+from .supervised.histgradientboosting.regressor import AutoMLHistGradientBoostingRegressor, AutoMLHistGradientBoostingRegressorCV
+
+from .unsupervised.kmeans.kmeans import AutoMLKMeans
+from .unsupervised.gaussianmixture.gaussianmixture import AutoMLGaussianMixture
 
 __all__ = [
-    "AutoMLLGBMRegressor",
     "AutoMLLGBMClassifier",
-    "AutoMLHistGradientBoostingRegressor",
+    "AutoMLLGBMRegressor",
     "AutoMLHistGradientBoostingClassifier",
-    "AutoMLLGBMRegressorCV",
+    "AutoMLHistGradientBoostingRegressor",
     "AutoMLLGBMClassifierCV",
-    "AutoMLHistGradientBoostingRegressorCV",
+    "AutoMLLGBMRegressorCV",
     "AutoMLHistGradientBoostingClassifierCV",
+    "AutoMLHistGradientBoostingRegressorCV",
+    "AutoMLKMeans",
+    "AutoMLGaussianMixture"
 ]
