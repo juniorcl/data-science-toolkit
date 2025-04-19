@@ -14,6 +14,9 @@ from ..analysis import (
 from ..metrics import get_cluster_metrics
 
 
+MODEL_NAME = "GaussianMixture"
+
+
 def get_params(trial, n_features):
     
     return {
@@ -41,11 +44,10 @@ class AutoMLGaussianMixture:
             params = get_params(trail, self.X.shape[1])
 
             model = GaussianMixture(**params)
-            model.fit(self.X)
 
-            y_pred = model.predict(self.X)
+            labels = model.fit_predict(self.X)
 
-            return silhouette_score(self.X, y_pred)
+            return silhouette_score(self.X, labels)
         
         optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -66,11 +68,10 @@ class AutoMLGaussianMixture:
             params = get_params(trail, X_reduced.shape[1])
 
             model = GaussianMixture(**params)
-            model.fit(X_reduced)
 
-            y_pred = model.predict(X_reduced)
+            labels = model.fit_predict(X_reduced)
 
-            return silhouette_score(X_reduced, y_pred)
+            return silhouette_score(X_reduced, labels)
         
         optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -91,11 +92,10 @@ class AutoMLGaussianMixture:
             params = get_params(trail, X_reduced.shape[1])
 
             model = GaussianMixture(**params)
-            model.fit(X_reduced)
 
-            y_pred = model.predict(X_reduced)
+            labels = model.fit_predict(X_reduced)
 
-            return silhouette_score(X_reduced, y_pred)
+            return silhouette_score(X_reduced, labels)
         
         optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -109,11 +109,10 @@ class AutoMLGaussianMixture:
         best_params = self._get_best_params()
         
         self.base_model = GaussianMixture(**best_params)
-        self.base_model.fit(self.X)
 
-        self.y['base_model'] = self.base_model.predict(self.X)
+        self.y['base_model_labels'] = self.base_model.fit_predict(self.X)
     
-        return get_cluster_metrics(self.X, self.y['base_model'])
+        return get_cluster_metrics(self.X, self.y['base_model_labels'])
     
     def _train_pca_model(self) -> tuple:
 
@@ -136,9 +135,9 @@ class AutoMLGaussianMixture:
             reg_covar=best_params['reg_covar']
         )   
         
-        self.y['pca_model'] = self.pca_model.fit_predict(self.X_pca)
+        self.y['pca_model_labels'] = self.pca_model.fit_predict(self.X_pca)
 
-        return get_cluster_metrics(self.X_pca, self.y['pca_model'])
+        return get_cluster_metrics(self.X_pca, self.y['pca_model_labels'])
     
     def _train_umap_model(self) -> tuple:
 
@@ -162,9 +161,9 @@ class AutoMLGaussianMixture:
             reg_covar=best_params['reg_covar']
         )
         
-        self.y['umap_model'] = self.umap_model.fit_predict(self.X_umap)
+        self.y['umap_model_labels'] = self.umap_model.fit_predict(self.X_umap)
 
-        return get_cluster_metrics(self.X_umap, self.y['umap_model'])
+        return get_cluster_metrics(self.X_umap, self.y['umap_model_labels'])
 
     def train(self) -> None:
 
@@ -176,9 +175,9 @@ class AutoMLGaussianMixture:
 
         return pd.DataFrame(
             {
-                "Base GaussianMixture Model": self.result_train_base_model,
-                "PCA GaussianMixture Model": self.result_pca_model,
-                "UMAP GaussianMixture Model": self.result_umap_model
+                f"Base {MODEL_NAME} Model": self.result_train_base_model,
+                f"PCA {MODEL_NAME} Model": self.result_pca_model,
+                f"UMAP {MODEL_NAME} Model": self.result_umap_model
             }
         )
     
@@ -186,16 +185,16 @@ class AutoMLGaussianMixture:
 
         results = self.get_metrics()
 
-        print("Base MeanShift Model")
-        display(results["Base GaussianMixture Model"])
-        get_results(self.X, self.y, "base_model")
+        print(f"Base {MODEL_NAME} Model")
+        display(results[f"Base {MODEL_NAME} Model"])
+        get_results(self.X, self.y, "base_model_labels")
 
-        print("PCA MeanShift Model")
-        display(results["PCA GaussianMixture Model"])
-        get_results(self.X_pca, self.y, "pca_model")
+        print(f"PCA {MODEL_NAME} Model")
+        display(results[f"PCA {MODEL_NAME} Model"])
+        get_results(self.X_pca, self.y, "pca_model_labels")
         
-        print("UMAP MeanShift Model")
-        display(results["UMAP GaussianMixture Model"])
-        get_results(self.X_umap, self.y, "umap_model")
+        print(f"UMAP {MODEL_NAME} Model")
+        display(results[f"UMAP {MODEL_NAME} Model"])
+        get_results(self.X_umap, self.y, "umap_model_labels")
 
 

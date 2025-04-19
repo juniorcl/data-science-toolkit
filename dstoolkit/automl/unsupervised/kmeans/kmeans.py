@@ -14,6 +14,9 @@ from ..analysis import (
 from ..metrics import get_cluster_metrics
 
 
+MODEL_NAME = "KMeans"
+
+
 def get_params(trial, random_state=42):
     
     return {
@@ -39,11 +42,10 @@ class AutoMLKMeans:
             params = get_params(trail, self.random_state)
 
             model = KMeans(**params)
-            model.fit(self.X)
 
-            y_pred = model.predict(self.X)
+            labels = model.fit_predict(self.X)
 
-            return silhouette_score(self.X, y_pred)
+            return silhouette_score(self.X, labels)
         
         optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -58,17 +60,16 @@ class AutoMLKMeans:
 
             params = get_params(trail, self.random_state)
 
-            pca_params = get_pca_params(trail, self.X, self.random_state)
+            pca_params = get_pca_params(trail, self.X.shape[1], self.random_state)
 
             reducer = PCA(**pca_params)
             X_reduced = reducer.fit_transform(self.X)
 
             kmeans = KMeans(**params)
-            kmeans.fit(X_reduced)
 
-            y_pred = kmeans.predict(X_reduced)
+            labels = kmeans.fit_predict(X_reduced)
 
-            return silhouette_score(X_reduced, y_pred)
+            return silhouette_score(X_reduced, labels)
         
         optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -89,11 +90,10 @@ class AutoMLKMeans:
             X_reduced = reducer.fit_transform(self.X)
 
             kmeans = KMeans(**params)
-            kmeans.fit(X_reduced)
 
-            y_pred = kmeans.predict(X_reduced)
+            labels = kmeans.fit_predict(X_reduced)
 
-            return silhouette_score(X_reduced, y_pred)
+            return silhouette_score(X_reduced, labels)
         
         optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -107,11 +107,10 @@ class AutoMLKMeans:
         best_params = self._get_best_params()
         
         self.base_model = KMeans(**best_params)
-        self.base_model.fit(self.X)
 
-        self.y['base_model'] = self.base_model.predict(self.X)
+        self.y['base_model_labels'] = self.base_model.fit_predict(self.X)
     
-        return get_cluster_metrics(self.X, self.y['base_model'])
+        return get_cluster_metrics(self.X, self.y['base_model_labels'])
     
     def _train_pca_model(self) -> tuple:
 
@@ -132,9 +131,9 @@ class AutoMLKMeans:
             random_state=best_params['random_state']
         )   
         
-        self.y['pca_model'] = self.pca_model.fit_predict(self.X_pca)
+        self.y['pca_model_labels'] = self.pca_model.fit_predict(self.X_pca)
 
-        return get_cluster_metrics(self.X_pca, self.y['pca_model'])
+        return get_cluster_metrics(self.X_pca, self.y['pca_model_labels'])
     
     def _train_umap_model(self) -> tuple:
 
@@ -156,9 +155,9 @@ class AutoMLKMeans:
             random_state=best_params['random_state']
         )
         
-        self.y['umap_model'] = self.umap_model.fit_predict(self.X_umap)
+        self.y['umap_model_labels'] = self.umap_model.fit_predict(self.X_umap)
 
-        return get_cluster_metrics(self.X_umap, self.y['umap_model'])
+        return get_cluster_metrics(self.X_umap, self.y['umap_model_labels'])
 
     def train(self) -> None:
 
@@ -170,9 +169,9 @@ class AutoMLKMeans:
 
         return pd.DataFrame(
             {
-                "Base KMeans Model": self.result_train_base_model,
-                "PCA KMeans Model": self.result_train_pca_model,
-                "UMAP KMeans Model": self.result_train_umap_model
+                f"Base {MODEL_NAME} Model": self.result_train_base_model,
+                f"PCA {MODEL_NAME} Model": self.result_train_pca_model,
+                f"UMAP {MODEL_NAME} Model": self.result_train_umap_model
             }
         )
     
@@ -180,16 +179,16 @@ class AutoMLKMeans:
 
         results = self.get_metrics()
 
-        print("Base KMeans Model")
-        display(results["Base KMeans Model"])
-        get_results(self.X, self.y, "base_model")
+        print(f"Base {MODEL_NAME} Model")
+        display(results[f"Base {MODEL_NAME} Model"])
+        get_results(self.X, self.y, "base_model_labels")
 
-        print("PCA KMeans Model")
-        display(results["PCA KMeans Model"])
-        get_results(self.X_pca, self.y, "pca_model")
+        print(f"PCA {MODEL_NAME} Model")
+        display(results[f"PCA {MODEL_NAME} Model"])
+        get_results(self.X_pca, self.y, "pca_model_labels")
         
-        print("UMAP KMeans Model")
-        display(results["UMAP KMeans Model"])
-        get_results(self.X_umap, self.y, "umap_model")
+        print(f"UMAP {MODEL_NAME} Model")
+        display(results[f"UMAP {MODEL_NAME} Model"])
+        get_results(self.X_umap, self.y, "umap_model_labels")
 
 
