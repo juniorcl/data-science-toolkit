@@ -1,6 +1,7 @@
-from .feature_creation.lag_features import SimpleLagTimeFeatureCreator
+from .feature_creation.lags import SimpleLagTimeFeatureCreator, GroupedLagTimeFeatureCreator
 
 
 __all__ = [
-    "SimpleLagTimeFeatureCreator"
+    "SimpleLagTimeFeatureCreator",
+    "GroupedLagTimeFeatureCreator"
 ]
