@@ -29,15 +29,14 @@ def plot_permutation_importance(model: BaseEstimator, features: list, X: pd.Data
 
 def plot_feature_importance(model: BaseEstimator) -> None:
     
-    if hasattr(model, 'feature_importances_'):
-        df_imp = pd.DataFrame(model.feature_importances_, model.feature_name_).reset_index()
-        df_imp.columns = ["Variable", "Importance"]
-        df_imp = df_imp.sort_values("Importance", ascending=False)
+    df_imp = pd.DataFrame(model.feature_importances_, model.feature_name_).reset_index()
+    df_imp.columns = ["Variable", "Importance"]
+    df_imp = df_imp.sort_values("Importance", ascending=False)
 
-        sns.barplot(x="Importance", y="Variable", color="#006e9cff", data=df_imp[:20])
+    sns.barplot(x="Importance", y="Variable", color="#006e9cff", data=df_imp[:20])
 
-        plt.title(f"Importance of Variables")
-        plt.show()
+    plt.title(f"Importance of Variables")
+    plt.show()
 
 def plot_shap_summary(model: BaseEstimator, features: list, X: pd.DataFrame) -> None:
 
@@ -264,6 +263,7 @@ def analyze_model(model_name: str, model: BaseEstimator, results: dict, features
         raise ValueError("Model needs to be a classifier or regressor.")
 
     plot_learning_curve(model, X_train, y_train, target, scoring=scoring)
-    plot_feature_importance(model)
+    if hasattr(model, 'feature_importances_'):
+        plot_feature_importance(model)
     plot_permutation_importance(model, features, X_train, y_train[target], scoring=scoring)
     plot_shap_summary(model, features, X_train)
