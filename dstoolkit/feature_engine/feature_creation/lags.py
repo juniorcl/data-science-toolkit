@@ -10,7 +10,13 @@ from scipy.stats import skew, kurtosis
 
 class SimpleLagTimeFeatureCreator:
 
-    def __init__(self, windows: List[int] = [2, 3, 4], functions: List[str] = ["mean", "median", "max", "min"], add_div: bool = True, add_diff: bool = True):
+    def __init__(
+            self, 
+            windows: List[int] = [2, 3, 4], 
+            functions: List[str] = ["mean", "median", "max", "min"], 
+            add_div: bool = True, 
+            add_diff: bool = True
+        ):
         """
         Initiate the lag feature creator.
 
@@ -49,7 +55,9 @@ class SimpleLagTimeFeatureCreator:
     def _create_lag_features(self, series: pd.Series) -> Dict[str, pd.Series]:
         """Creates all lagged features for a time series."""
         lag_one = series.shift(1)
-        features = {f'{series.name}_sum_1_lag': lag_one}
+        features = {f'{series.name}_lag_1': lag_one}
+
+        features.update({f'{series.name}_lag_{i}': series.shift(i) for i in range(2, max(self.windows) + 1)})
 
         valid_funcs = [func for func in self.functions if func in self._function_map]
 
@@ -57,7 +65,7 @@ class SimpleLagTimeFeatureCreator:
             func_operation = self._function_map[func]
             for win in self.windows:
                 feature_values = lag_one.rolling(window=win, min_periods=2).apply(func_operation, raw=True)
-                features[f'{series.name}_{func}_{win}_lag'] = feature_values
+                features[f'{series.name}_{func}_{win}_lags'] = feature_values
 
         return features
 
@@ -69,9 +77,7 @@ class SimpleLagTimeFeatureCreator:
         lags = {i: series.shift(i) for i in range(1, max_lag + 1)}
 
         for i in range(1, max_lag):
-            
             for j in range(i + 1, max_lag + 1):
-                
                 pct_diff = lags[i] / lags[j].replace({0: np.nan})  # avoid division by zero
                 features[f'{series.name}_div_lag_{i}_vs_{j}'] = pct_diff
 
@@ -121,7 +127,7 @@ class SimpleLagTimeFeatureCreator:
             lag_features.update(diff_features)
 
         return df.assign(**lag_features)
-
+    
 
 class GroupedLagTimeFeatureCreator:
     
@@ -172,7 +178,9 @@ class GroupedLagTimeFeatureCreator:
     def _create_lag_features(self, series: pd.Series) -> Dict[str, pd.Series]:
         """Generate rolling window lag features for a single series."""
         lag_one = series.shift(1)
-        features = {f'{series.name}_sum_1_lag': lag_one}
+        features = {f'{series.name}_lag_1': lag_one}
+
+        features.update({f'{series.name}_lag_{i}': series.shift(i) for i in range(2, max(self.windows) + 1)})
 
         valid_funcs = [func for func in self.functions if func in self._function_map]
 
