@@ -3,7 +3,8 @@ import warnings
 import numpy  as np
 import pandas as pd
 
-from typing import List, Dict
+from typing import List, Union
+from itertools import combinations
 
 from scipy.stats import skew, kurtosis
 
@@ -52,50 +53,31 @@ class SimpleLagTimeFeatureCreator:
         """Calculates the slope using least squares."""
         return np.polyfit(np.arange(len(x)), x, 1)[0]
 
-    def _create_lag_features(self, series: pd.Series) -> Dict[str, pd.Series]:
+    def _create_lag_features(self, series: pd.Series) -> None:
         """Creates all lagged features for a time series."""
-        lag_one = series.shift(1)
-        features = {f'{series.name}_lag_1': lag_one}
+        self.features = {f'{series.name}_lag_{i}': series.shift(i) for i in range(1, max(self.windows) + 1)}
 
-        features.update({f'{series.name}_lag_{i}': series.shift(i) for i in range(2, max(self.windows) + 1)})
-
-        valid_funcs = [func for func in self.functions if func in self._function_map]
-
-        for func in valid_funcs:
+        for func in self.functions:
             func_operation = self._function_map[func]
             for win in self.windows:
-                feature_values = lag_one.rolling(window=win, min_periods=2).apply(func_operation, raw=True)
-                features[f'{series.name}_{func}_{win}_lags'] = feature_values
+                feature_values = self.features[f'{series.name}_lag_1'].rolling(window=win, min_periods=2).apply(func_operation, raw=True)
+                self.features[f'{series.name}_{func}_last_{win}_lags'] = feature_values
 
-        return features
-
-    def _create_lag_div_features(self, series: pd.Series, max_lag: int = 4) -> Dict[str, pd.Series]:
+    def _create_lag_div_features(self, series: pd.Series, max_lag: int = 4) -> None:
         """
         Creates div between all lag combinations: lag_i/lag_j for i < j
         """
-        features = {}
-        lags = {i: series.shift(i) for i in range(1, max_lag + 1)}
+        for i, j in combinations(range(1, max_lag + 1), 2):
+            pct_diff = self.features[f'{series.name}_lag_{i}'] / self.features[f'{series.name}_lag_{j}'].replace({0: np.nan})  # avoid division by zero
+            self.features[f'{series.name}_div_lag_{i}_vs_{j}'] = pct_diff
 
-        for i in range(1, max_lag):
-            for j in range(i + 1, max_lag + 1):
-                pct_diff = lags[i] / lags[j].replace({0: np.nan})  # avoid division by zero
-                features[f'{series.name}_div_lag_{i}_vs_{j}'] = pct_diff
-
-        return features
-
-    def _create_lag_diff_features(self, series: pd.Series, max_lag: int = 4) -> Dict[str, pd.Series]:
+    def _create_lag_diff_features(self, series: pd.Series, max_lag: int = 4) -> None:
         """
         Creates differences between all lag combinations: lag_i - lag_j for i < j
         """
-        features = {}
-        lags = {i: series.shift(i) for i in range(1, max_lag + 1)}
-
-        for i in range(1, max_lag):
-            for j in range(i + 1, max_lag + 1):
-                diff = lags[i] - lags[j]
-                features[f'{series.name}_diff_lag_{i}_vs_{j}'] = diff
-
-        return features
+        for i, j in combinations(range(1, max_lag + 1), 2):
+            diff = self.features[f'{series.name}_lag_{i}'] - self.features[f'{series.name}_lag_{j}']
+            self.features[f'{series.name}_diff_lag_{i}_vs_{j}'] = diff
 
     def create(self, df: pd.DataFrame, target: str, time: str) -> pd.DataFrame:
         """
@@ -114,39 +96,26 @@ class SimpleLagTimeFeatureCreator:
 
         df = df.sort_values(by=time)
 
-        lag_features = self._create_lag_features(df[target])
+        self._create_lag_features(df[target])
 
         if self.add_div:
-            max_lag = max(self.windows) if self.windows else 4
-            pct_diff_features = self._create_lag_div_features(df[target], max_lag=max_lag)
-            lag_features.update(pct_diff_features)
+            self._create_lag_div_features(df[target], max_lag=max(self.windows))
 
         if self.add_diff:
-            max_lag = max(self.windows) if self.windows else 4
-            diff_features = self._create_lag_diff_features(df[target], max_lag=max_lag)
-            lag_features.update(diff_features)
-
-        return df.assign(**lag_features)
+            self._create_lag_diff_features(df[target], max_lag=max(self.windows))
+    
+        return df.assign(**self.features)
     
 
 class GroupedLagTimeFeatureCreator:
-    
-    def __init__(
-        self,
-        windows: List[int] = [2, 3, 4],
-        functions: List[str] = ["mean", "median", "max", "min"],
-        add_div: bool = True,
-        add_diff: bool = True
-    ):
-        """
-        Initialize the lag feature creator.
 
-        Args:
-            windows: List of window sizes for rolling statistics.
-            functions: List of statistical functions to apply.
-            add_div: Whether to add division-based lag features.
-            add_diff: Whether to add difference-based lag features.
-        """
+    def __init__(
+            self,
+            windows: List[int] = [2, 3, 4],
+            functions: List[str] = ["mean", "median", "max", "min"],
+            add_div: bool = True,
+            add_diff: bool = True
+        ):
         self.windows = windows
         self.functions = functions
         self.add_div = add_div
@@ -166,93 +135,64 @@ class GroupedLagTimeFeatureCreator:
 
         if 1 in self.windows:
             warnings.warn(
-                "Window size 1 found. This is not recommended as it does not aggregate temporal information.",
+                "Window size 1 was found. Windows with size equal to 1 are not recommended for lag/rolling calculations.",
                 UserWarning
             )
             self.windows.remove(1)
 
     def _calc_slope(self, x: np.ndarray) -> float:
-        """Compute the slope of the series using linear regression (least squares)."""
         return np.polyfit(np.arange(len(x)), x, 1)[0]
 
-    def _create_lag_features(self, series: pd.Series) -> Dict[str, pd.Series]:
-        """Generate rolling window lag features for a single series."""
-        lag_one = series.shift(1)
-        features = {f'{series.name}_lag_1': lag_one}
+    def _create_group_features(self, group_df: pd.DataFrame, target: str) -> pd.DataFrame:
+        series = group_df[target]
 
-        features.update({f'{series.name}_lag_{i}': series.shift(i) for i in range(2, max(self.windows) + 1)})
-
-        valid_funcs = [func for func in self.functions if func in self._function_map]
-
-        for func in valid_funcs:
+        max_lag = max(self.windows)
+        lagged_features = {f'{target}_lag_{i}': series.shift(i) for i in range(1, max_lag + 1)}
+        
+        # rolling statistics
+        for func in self.functions:
             func_operation = self._function_map[func]
             for win in self.windows:
-                feature_values = lag_one.rolling(window=win, min_periods=2).apply(func_operation, raw=True)
-                features[f'{series.name}_{func}_{win}_lag'] = feature_values
+                result = lagged_features[f'{target}_lag_1'].rolling(window=win, min_periods=2).apply(func_operation, raw=True)
+                lagged_features[f'{target}_{func}_last_{win}_lags'] = result
 
-        return features
+        # division and difference between lag pairs
+        if self.add_div or self.add_diff:
+            for i, j in combinations(range(1, max_lag + 1), 2):
+                lag_i = lagged_features[f'{target}_lag_{i}']
+                lag_j = lagged_features[f'{target}_lag_{j}']
 
-    def _create_lag_div_features(self, series: pd.Series, max_lag: int = 4) -> Dict[str, pd.Series]:
-        """Create features based on the division between lagged values."""
-        features = {}
-        lags = {i: series.shift(i) for i in range(1, max_lag + 1)}
+                if self.add_div:
+                    lagged_features[f'{target}_div_lag_{i}_vs_{j}'] = lag_i / lag_j.replace({0: np.nan})
+                if self.add_diff:
+                    lagged_features[f'{target}_diff_lag_{i}_vs_{j}'] = lag_i - lag_j
 
-        for i in range(1, max_lag):
-            for j in range(i + 1, max_lag + 1):
-                pct_diff = lags[i] / lags[j].replace({0: np.nan})
-                features[f'{series.name}_div_lag_{i}_vs_{j}'] = pct_diff
+        return group_df.assign(**lagged_features)
 
-        return features
-
-    def _create_lag_diff_features(self, series: pd.Series, max_lag: int = 4) -> Dict[str, pd.Series]:
-        """Create features based on the difference between lagged values."""
-        features = {}
-        lags = {i: series.shift(i) for i in range(1, max_lag + 1)}
-
-        for i in range(1, max_lag):
-            for j in range(i + 1, max_lag + 1):
-                diff = lags[i] - lags[j]
-                features[f'{series.name}_diff_lag_{i}_vs_{j}'] = diff
-
-        return features
-
-    def create(self, df: pd.DataFrame, target: str, time: str, groupby_col: str) -> pd.DataFrame:
+    def create(self, df: pd.DataFrame, group_cols: Union[str, List[str]], target: str, time: str) -> pd.DataFrame:
         """
-        Apply lag-based feature engineering on a grouped time series.
+        Create grouped lag-based time features.
 
         Args:
-            df: Input DataFrame containing the time series data.
-            target: Name of the target column for lag computation.
-            time: Name of the time column used to sort data.
-            groupby_col: Column name used for grouping (e.g., source/category).
+            df: Input DataFrame
+            group_cols: Column(s) used to group the data (e.g., client_id, product_id)
+            target: Column from which lag features will be created
+            time: Time column (must be pre-sorted within groups)
 
         Returns:
-            A new DataFrame including the generated lag features.
+            DataFrame with additional lag-based features
         """
+        if isinstance(group_cols, str):
+            group_cols = [group_cols]
+
         if target not in df.columns:
-            raise ValueError(f"Target column '{target}' not found in DataFrame")
+            raise ValueError(f"Column '{target}' not found in the DataFrame")
 
-        if groupby_col not in df.columns:
-            raise ValueError(f"Group-by column '{groupby_col}' not found in DataFrame")
+        df = df.sort_values(by=group_cols + [time])
+        result = (
+            df
+            .groupby(group_cols, group_keys=False)
+            .apply(lambda group: self._create_group_features(group, target))
+        )
 
-        # Sort by group and time
-        df = df.sort_values(by=[groupby_col, time])
-        output_df = df.copy()
-
-        # Process each group independently
-        for group, group_df in df.groupby(groupby_col):
-            lag_feats = self._create_lag_features(group_df[target])
-
-            if self.add_div:
-                max_lag = max(self.windows) if self.windows else 4
-                lag_feats.update(self._create_lag_div_features(group_df[target], max_lag=max_lag))
-
-            if self.add_diff:
-                max_lag = max(self.windows) if self.windows else 4
-                lag_feats.update(self._create_lag_diff_features(group_df[target], max_lag=max_lag))
-
-            # Assign lag features to the correct rows using original indices
-            for col, values in lag_feats.items():
-                output_df.loc[group_df.index, col] = values
-
-        return output_df
+        return result.reset_index(drop=True)
