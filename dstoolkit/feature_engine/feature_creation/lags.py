@@ -51,7 +51,14 @@ class SimpleLagTimeFeatureCreator:
 
     def _calc_slope(self, x: np.ndarray) -> float:
         """Calculates the slope using least squares."""
-        return np.polyfit(np.arange(len(x)), x, 1)[0]
+        x = np.asarray(x)
+        
+        if len(x) < 2 or np.isnan(x).any() or np.isinf(x).any() or np.all(x == x[0]):
+            return np.nan
+        try:
+            return np.polyfit(np.arange(len(x)), x, 1)[0]
+        except np.linalg.LinAlgError:
+            return np.nan
 
     def _create_lag_features(self, series: pd.Series) -> None:
         """Creates all lagged features for a time series."""
@@ -141,7 +148,15 @@ class GroupedLagTimeFeatureCreator:
             self.windows.remove(1)
 
     def _calc_slope(self, x: np.ndarray) -> float:
-        return np.polyfit(np.arange(len(x)), x, 1)[0]
+        """Calculates the slope using least squares."""
+        x = np.asarray(x)
+        
+        if len(x) < 2 or np.isnan(x).any() or np.isinf(x).any() or np.all(x == x[0]):
+            return np.nan
+        try:
+            return np.polyfit(np.arange(len(x)), x, 1)[0]
+        except np.linalg.LinAlgError:
+            return np.nan
 
     def _create_group_features(self, group_df: pd.DataFrame, target: str) -> pd.DataFrame:
         series = group_df[target]
