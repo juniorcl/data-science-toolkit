@@ -76,7 +76,7 @@ class SimpleLagTimeFeatureCreator:
         """
         for i, j in combinations(range(1, max_lag + 1), 2):
             pct_diff = self.features[f'{series.name}_lag_{i}'] / self.features[f'{series.name}_lag_{j}'].replace({0: np.nan})  # avoid division by zero
-            self.features[f'{series.name}_div_lag_{i}_vs_{j}'] = pct_diff
+            self.features[f'{series.name}_div_lag_{i}_vs_lag_{j}'] = pct_diff
 
     def _create_lag_diff_features(self, series: pd.Series, max_lag: int = 4) -> None:
         """
@@ -84,7 +84,7 @@ class SimpleLagTimeFeatureCreator:
         """
         for i, j in combinations(range(1, max_lag + 1), 2):
             diff = self.features[f'{series.name}_lag_{i}'] - self.features[f'{series.name}_lag_{j}']
-            self.features[f'{series.name}_diff_lag_{i}_vs_{j}'] = diff
+            self.features[f'{series.name}_diff_lag_{i}_vs_lag_{j}'] = diff
 
     def create(self, df: pd.DataFrame, target: str, time: str) -> pd.DataFrame:
         """
@@ -178,9 +178,9 @@ class GroupedLagTimeFeatureCreator:
                 lag_j = lagged_features[f'{target}_lag_{j}']
 
                 if self.add_div:
-                    lagged_features[f'{target}_div_lag_{i}_vs_{j}'] = lag_i / lag_j.replace({0: np.nan})
+                    lagged_features[f'{target}_div_lag_{i}_vs_lag_{j}'] = lag_i / lag_j.replace({0: np.nan})
                 if self.add_diff:
-                    lagged_features[f'{target}_diff_lag_{i}_vs_{j}'] = lag_i - lag_j
+                    lagged_features[f'{target}_diff_lag_{i}_vs_lag_{j}'] = lag_i - lag_j
 
         return group_df.assign(**lagged_features)
 
