@@ -6,7 +6,7 @@ import seaborn as sns
 
 import matplotlib.pyplot as plt
 
-from sklearn.base            import BaseEstimator, ClassifierMixin, RegressorMixin
+from sklearn.base            import BaseEstimator, ClassifierMixin
 from sklearn.metrics         import roc_curve, precision_recall_curve
 from sklearn.inspection      import permutation_importance
 from sklearn.calibration     import calibration_curve
@@ -28,8 +28,10 @@ def plot_permutation_importance(model: BaseEstimator, features: list, X: pd.Data
     plt.show()
 
 def plot_feature_importance(model: BaseEstimator) -> None:
+
+    feature_names = model.feature_name_ if hasattr(model, 'feature_name_') else model.feature_names_ # for catboost
     
-    df_imp = pd.DataFrame(model.feature_importances_, model.feature_name_).reset_index()
+    df_imp = pd.DataFrame(model.feature_importances_, feature_names).reset_index()
     df_imp.columns = ["Variable", "Importance"]
     df_imp = df_imp.sort_values("Importance", ascending=False)
 
@@ -236,20 +238,32 @@ def summarize_metric_results(results: dict[str, dict[str, float]]) -> pd.DataFra
     
     return pd.DataFrame(rows)
 
+def detect_model_type(model) -> str:
+    
+    name = type(model).__name__.lower()
+    
+    if 'classifier' in name or hasattr(model, 'predict_proba'):
+        return 'classifier'
+    
+    elif 'regressor' in name or (hasattr(model, 'predict') and not hasattr(model, 'predict_proba')):
+        return 'regressor'
+    
+    return 'unknown'
+
 def analyze_model(model_name: str, model: BaseEstimator, results: dict, features: list, X_train: pd.DataFrame, y_train: pd.DataFrame, y_test: pd.DataFrame, target: str, scoring: str) -> None:
     
     print(f"{model_name} Results")
 
     display(summarize_metric_results(results))
 
-    if isinstance(model, RegressorMixin):
+    if detect_model_type(model) == 'regressor':
         pred_col = f"{model_name}_pred"
         
         plot_residuals(y_test, pred_col, target)
         plot_pred_vs_true(y_test, pred_col, target)
         plot_error_by_quantile(y_test, pred_col, target)
 
-    elif isinstance(model, ClassifierMixin):
+    elif detect_model_type(model) == 'classifier':
         pred_col = f"{model_name}_pred"
         prob_col = f"{model_name}_prob"
         
