@@ -20,9 +20,7 @@ class CosineDistanceSummarizer():
 
     def _tokenize(self, text):
 
-        doc = self._nlp(text)
-        
-        return [sent.text.strip() for sent in doc.sents]
+        return nltk.sent_tokenize(text)
 
     def _preprocess_sentences(self, sentences):
             
