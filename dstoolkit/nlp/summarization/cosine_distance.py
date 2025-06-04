@@ -1,3 +1,4 @@
+import nltk
 import spacy
 import heapq
 
@@ -5,8 +6,6 @@ import numpy    as np
 import networkx as nx
 
 from collections import Counter
-
-from nltk.cluster.util    import cosine_distance
 
 
 class CosineDistanceSummarizer():
@@ -19,9 +18,9 @@ class CosineDistanceSummarizer():
 
         self._lemma = lemma
 
-    def _tokenize(self):
+    def _tokenize(self, text):
 
-        doc = self._nlp(self.text)
+        doc = self._nlp(text)
         
         return [sent.text.strip() for sent in doc.sents]
 
@@ -40,7 +39,7 @@ class CosineDistanceSummarizer():
 
         list_words_one = [token for token in self._nlp(sentence_one)]
         
-        list_words_two = [token for token in self._nlp(sentence_one)]
+        list_words_two = [token for token in self._nlp(sentence_two)]
     
         list_all_words = {word: i for i, word in enumerate(set(list_words_one + list_words_two))}
     
@@ -50,7 +49,7 @@ class CosineDistanceSummarizer():
         array_one = np.array([counter_one.get(word, 0) for word in list_all_words], dtype=int)
         array_two = np.array([counter_two.get(word, 0) for word in list_all_words], dtype=int)
     
-        return 1 - cosine_distance(array_one, array_two)        
+        return 1 - nltk.cluster.util.cosine_distance(array_one, array_two)        
 
     def _calc_similarity_matrix(self, sentences):
     
@@ -77,9 +76,9 @@ class CosineDistanceSummarizer():
 
         return scores
 
-    def summarize(self):
+    def summarize(self, text):
 
-        self.list_sentences = self._tokenize()
+        self.list_sentences = self._tokenize(text)
 
         list_preprocessed_sentences = self._preprocess_sentences(self.list_sentences)
 
