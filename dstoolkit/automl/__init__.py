@@ -1,14 +1,14 @@
-from .supervised.lightgbm.classifier import AutoMLLGBMClassifier, AutoMLLGBMClassifierCV
-from .supervised.lightgbm.regressor import AutoMLLGBMRegressor, AutoMLLGBMRegressorCV
+from .classifier.lightgbm import AutoMLLGBMClassifier, AutoMLLGBMClassifierCV
+from .regressor.lightgbm import AutoMLLGBMRegressor, AutoMLLGBMRegressorCV
 
-from .supervised.histgradientboosting.classifier import AutoMLHistGradientBoostingClassifier, AutoMLHistGradientBoostingClassifierCV
-from .supervised.histgradientboosting.regressor import AutoMLHistGradientBoostingRegressor, AutoMLHistGradientBoostingRegressorCV
+from .classifier.histgradient import AutoMLHistGradientBoostingClassifier, AutoMLHistGradientBoostingClassifierCV
+from .regressor.histgradient import AutoMLHistGradientBoostingRegressor, AutoMLHistGradientBoostingRegressorCV
 
-from .supervised.catboost.classifier import AutoMLCatBoostClassifier, AutoMLCatBoostClassifierCV
-from .supervised.catboost.regressor import AutoMLCatBoostRegressor, AutoMLCatBoostRegressorCV
+from .classifier.catboost import AutoMLCatBoostClassifier, AutoMLCatBoostClassifierCV
+from .regressor.catboost import AutoMLCatBoostRegressor, AutoMLCatBoostRegressorCV
 
-from .unsupervised.kmeans.kmeans import AutoMLKMeans
-from .unsupervised.gaussianmixture.gaussianmixture import AutoMLGaussianMixture
+from .clustering.kmeans import AutoMLKMeans
+from .clustering.gaussian_mixture import AutoMLGaussianMixture
 
 __all__ = [
     "AutoMLCatBoostClassifier",
