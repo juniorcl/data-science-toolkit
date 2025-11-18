@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 
-class CatEncoderWrapper(BaseEstimator, TransformerMixin):
+class CategoryEncoderWrapper(BaseEstimator, TransformerMixin):
     def __init__(self, encoder_cls, cols):
         self.encoder_cls = encoder_cls
         self.cols = cols
