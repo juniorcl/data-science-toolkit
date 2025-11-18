@@ -1,7 +1,18 @@
-from .classifier import AutoMLClassifier
-from .regressor import AutoMLRegressor
+from .classifier.automl_classifier_class import AutoMLClassifier
+from .classifier.automl_classifier_cv_class import AutoMLClassifierCV
+
+from .regressor.automl_regressor_class import AutoMLRegressor
+from .regressor.automl_regressor_cv_class import AutoMLRegressorCV
+
+from .clustering.automl_clustering_class import AutoMLClustering
+from .clustering.automl_pca import AutoMLPCA
+
 
 __all__ = [
     "AutoMLClassifier",
-    "AutoMLRegressor"
+    "AutoMLRegressor",
+    "AutoMLClustering",
+    "AutoMLPCA",
+    "AutoMLClassifierCV",
+    "AutoMLRegressorCV",
 ]
