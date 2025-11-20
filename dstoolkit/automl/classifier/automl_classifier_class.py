@@ -62,9 +62,9 @@ class AutoMLClassifier:
             y['prob'] = self.model.predict_proba(X)[:, 1]
 
         self.results = {
-            'Train': get_classifier_metrics(self.y_train, 'pred', 'prob', self.target),
-            'Valid': get_classifier_metrics(self.y_valid, 'pred', 'prob', self.target),
-            'Test': get_classifier_metrics(self.y_test, 'pred', 'prob', self.target)
+            'Train': get_classifier_metrics(self.y_train, target=self.target, pred_col='pred', prob_col='prob'),
+            'Valid': get_classifier_metrics(self.y_valid, target=self.target, pred_col='pred', prob_col='prob'),
+            'Test': get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
         }
         return self.model, self.results
 

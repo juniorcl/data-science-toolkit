@@ -1,9 +1,36 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_samples, silhouette_score
 
+
 def plot_silhouette_analysis(X, labels, metric='euclidean'):
+    """
+    Plot the silhouette analysis for the given clustering results.
+
+    This function computes and visualizes the silhouette scores for each sample
+    in the dataset, providing insights into the quality of the clustering.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+        The input data to cluster.
+    labels : array-like, shape (n_samples,)
+        The cluster labels for each sample.
+    metric : str, optional
+        The distance metric to use for computing the silhouette scores.
+        Default is 'euclidean'.
+
+    Returns
+    -------
+    None
+        This function does not return a value, but it displays a plot
+        of the silhouette analysis.
+    
+    Raises
+    ------
+    None
+    """
     silhouette_avg = silhouette_score(X, labels, metric=metric)
     sample_silhouette_values = silhouette_samples(X, labels, metric=metric)
 

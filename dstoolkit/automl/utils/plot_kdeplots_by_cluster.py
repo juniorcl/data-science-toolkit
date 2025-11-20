@@ -3,7 +3,39 @@ import numpy  as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+
 def plot_kdeplots_by_cluster(X, labels, n_cols=3, figsize=(15, 10), fill=False, alpha=0.8):
+    """
+    Plots KDE (Kernel Density Estimate) plots for each feature in the dataset, grouped by cluster labels.
+
+    This function is useful for visualizing the distribution of features within each cluster,
+    helping to identify patterns and differences between clusters.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame containing the features to plot.
+    labels : pd.Series or np.ndarray
+        Cluster labels for each sample in the dataset.
+    n_cols : int, optional
+        Number of columns for the subplot grid (default is 3).
+    figsize : tuple, optional
+        Size of the figure (default is (15, 10)).
+    fill : bool, optional
+        Whether to fill the area under the KDE curve (default is False).
+    alpha : float, optional
+        Transparency level for the filled area (default is 0.8).
+
+    Returns
+    -------
+    None
+        This function does not return a value.
+
+    Raises
+    ------
+    ValueError
+        If the input DataFrame is empty or if the labels do not match the number of samples.
+    """
     if not isinstance(X, pd.DataFrame):
         X = pd.DataFrame(X)
 

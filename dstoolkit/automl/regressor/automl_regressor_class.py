@@ -57,9 +57,9 @@ class AutoMLRegressor:
         self.y_test['pred'] = model.predict(self.X_test)
 
         results = {
-            'Train': get_regressor_metrics(self.y_train, 'pred', self.target),
-            'Valid': get_regressor_metrics(self.y_valid, 'pred', self.target),
-            'Test': get_regressor_metrics(self.y_test, 'pred', self.target)
+            'Train': get_regressor_metrics(self.y_train, target=self.target, pred_col='pred'),
+            'Valid': get_regressor_metrics(self.y_valid, target=self.target, pred_col='pred'),
+            'Test': get_regressor_metrics(self.y_test, target=self.target, pred_col='pred')
         }
         return model, results
 

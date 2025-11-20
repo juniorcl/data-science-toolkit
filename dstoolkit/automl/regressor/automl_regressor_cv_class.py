@@ -81,7 +81,7 @@ class AutoMLRegressorCV:
         results = {'Train CV': self._cross_validate(model)}
         model.fit(self.X_train, self.y_train[self.target])
         self.y_test['pred'] = model.predict(self.X_test)
-        results['Test'] = get_regressor_metrics(self.y_test, 'pred', self.target)
+        results['Test'] = get_regressor_metrics(self.y_test, target=self.target, pred_col='pred')
         return model, results
 
     def train(self, X_train, y_train, X_test, y_test, target='target'):

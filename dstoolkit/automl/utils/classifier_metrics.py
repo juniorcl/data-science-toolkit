@@ -9,10 +9,45 @@ from sklearn.metrics import (
     log_loss
 )
 
-def get_classifier_metrics(y, pred_col, prob_col, target):
+def get_classifier_metrics(y, target, pred_col="pred", prob_col="prob"):
+    """
+    Calculate a set of classification metrics.
+
+    This function computes various classification metrics based on the true and predicted values.
+
+    Parameters
+    ----------
+    y : pd.DataFrame
+        DataFrame containing the true labels and predictions.
+    pred_col : str
+        Name of the column with predicted class labels.
+    prob_col : str
+        Name of the column with predicted probabilities for the positive class.
+    target : str
+        Name of the column with true class labels.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the calculated metrics:
+        - 'Balanced Accuracy'
+        - 'Precision'
+        - 'Recall'
+        - 'F1'
+        - 'AUC'
+        - 'KS'
+        - 'Brier'
+        - 'LogLoss'
+
+    Raises
+    ------
+    ValueError
+        If the input data is not valid for classification.
+    """
     y_true = y[target]
     y_pred = y[pred_col]
     y_prob = y[prob_col]
+    
     return {
         'Balanced Accuracy': balanced_accuracy_score(y_true, y_pred),
         'Precision': precision_score(y_true, y_pred),
