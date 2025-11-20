@@ -42,9 +42,9 @@ def analyze_classifier(model, X_train, y_train, y_test, target, scoring, prob_co
     ValueError
         If the input data is not valid for classification.
     """
-    plot_roc_curve(y_test, prob_col, target)
+    plot_roc_curve(y_test, target, prob_col)
     plot_ks_curve(y_test, target)
-    plot_precision_recall_curve(y_test, prob_col, target)
+    plot_precision_recall_curve(y_test, target, prob_col)
     plot_calibration_curve(y_test, target, strategy='uniform')
     plot_learning_curve(model, X_train, y_train[target], scoring=scoring)
     if hasattr(model, 'feature_importances_'):

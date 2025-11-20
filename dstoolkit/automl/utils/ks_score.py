@@ -1,5 +1,6 @@
 from scipy.stats import ks_2samp
 
+
 def ks_score(y_true, y_prob):
     """
     Calculate the Kolmogorov-Smirnov (KS) score between positive and negative classes.
