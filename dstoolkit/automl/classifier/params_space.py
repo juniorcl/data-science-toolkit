@@ -1,4 +1,26 @@
 def get_params_space(model_name, trial, random_state=42):
+    """
+    Get the hyperparameter search space for the specified classification model.
+
+    Parameters
+    ----------
+    model_name : str
+        The name of the classification model to use.
+    trial : optuna.trial.Trial
+        The Optuna trial object for suggesting hyperparameters.
+    random_state : int, optional
+        The random state for reproducibility (default is 42).
+
+    Returns
+    -------
+    params_space : dict
+        The hyperparameter search space for the model.
+
+    Raises
+    ------
+    ValueError
+        If the input data is not valid for classification.
+    """
     match model_name:
         case 'LightGBM':
             return {
