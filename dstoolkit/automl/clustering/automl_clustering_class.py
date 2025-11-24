@@ -7,7 +7,56 @@ from .model_instance import get_model_instance
 
 from ..utils import get_cluster_eval_scoring, get_cluster_metrics, analyze_clusters
 
+
 class AutoMLClustering:
+    """
+    AutoMLClustering is a class that automates the process of clustering model selection
+    and hyperparameter tuning using Optuna. It supports various clustering algorithms
+    and evaluation metrics.
+
+    Parameters
+    ----------
+    model_name : str
+        The name of the clustering model to be used (e.g., 'KMeans', 'DBSCAN').
+    scoring : str, optional (default='silhouette')
+        The evaluation metric to optimize during hyperparameter tuning.
+        Supported metrics include 'silhouette', 'davies_bouldin_score', etc.
+    n_trials : int, optional (default=50)
+        The number of trials for the hyperparameter optimization process.
+    random_state : int, optional (default=42)
+        The random seed for reproducibility.
+
+    Attributes
+    ----------
+    model_name : str
+        The name of the clustering model.
+    random_state : int
+        The random seed for reproducibility.
+    model_class : class
+        The clustering model class obtained from model_name.
+    scorer : str
+        The evaluation metric used for scoring.
+    func_metric : function
+        The function corresponding to the evaluation metric.
+
+    Methods
+    -------
+    train(X)
+        Fits the clustering model to the data X after hyperparameter tuning.
+    get_metrics(return_df=True)
+        Returns the clustering evaluation metrics.
+    analyze(X_orig)
+        Analyzes and visualizes the clustering results.
+
+    Examples
+    --------
+    >>> obj = AutoMLClustering(model_name='KMeans', scoring='silhouette', n_trials=20)
+    >>> obj.train(X)
+    AutoMLClustering(...)
+    >>> obj.get_metrics()
+               Train
+    silhouette_score    0.65
+    """
     def __init__(self, model_name, scoring='silhouette', n_trials=50, random_state=42):
         self.n_trials = n_trials
         self.model_name = model_name
