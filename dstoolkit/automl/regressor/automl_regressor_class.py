@@ -8,6 +8,7 @@ from .model_instance import get_model_instance
 
 from ..utils import get_regressor_eval_scoring, get_regressor_metrics, analyze_regressor
 
+
 class AutoMLRegressor:
     """
     AutoMLRegressor is a class that automates the process of training and tuning regression models. 

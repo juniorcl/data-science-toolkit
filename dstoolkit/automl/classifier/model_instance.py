@@ -2,6 +2,7 @@ from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 
+
 def get_model_instance(model_name):
     """
     Get an instance of the specified classification model.

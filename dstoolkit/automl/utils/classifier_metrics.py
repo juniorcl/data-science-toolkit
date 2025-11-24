@@ -9,6 +9,7 @@ from sklearn.metrics import (
     log_loss
 )
 
+
 def get_classifier_metrics(y, target, pred_col="pred", prob_col="prob"):
     """
     Calculate a set of classification metrics.

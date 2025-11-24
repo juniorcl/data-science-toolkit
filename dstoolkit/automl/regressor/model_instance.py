@@ -2,6 +2,7 @@ from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor
 
+
 def get_model_instance(model_name):
     """
     Get an instance of the specified regression model.
