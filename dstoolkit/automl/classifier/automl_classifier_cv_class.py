@@ -11,8 +11,77 @@ from .model_instance import get_model_instance
 
 from ..utils import get_classifier_eval_scoring, get_classifier_metrics, analyze_classifier, ks_scorer
 
+
 class AutoMLClassifierCV:
-    def __init__(self, model_name, scoring='roc_auc', cv=None, tune=False, n_trials=50, random_state=42):
+    """
+    Automated Machine Learning Classifier with Hyperparameter Tuning. 
+    This class provides an interface to train and evaluate classification models
+    with optional hyperparameter tuning using Optuna.
+
+    Parameters
+    ----------
+    model_name : str
+        The name of the classification model to use.
+    scoring : str, optional
+        The evaluation metric to use for model selection. Default is 'roc_auc'.
+    tune : bool, optional
+        Whether to perform hyperparameter tuning. Default is False.
+    n_trials : int, optional
+        The number of Optuna trials to run for hyperparameter tuning. Default is 50.
+    random_state : int, optional
+        The random seed for reproducibility. Default is 42.
+    cv : int or cross-validation generator, optional
+        The cross-validation strategy to use for hyperparameter tuning and evaluation. Default is 3.
+                
+    Attributes
+    ----------
+    model : object
+        The trained classification model.
+    best_params : dict
+        The best hyperparameters found during tuning.
+    results : dict
+        A dictionary containing evaluation metrics for training, validation, and test sets.
+    scorer : callable
+        The scoring function used for evaluation.
+    func_metric : callable
+        The metric function used for optimization during tuning.
+    cv : int or cross-validation generator
+        The cross-validation strategy used.
+    X_train : pd.DataFrame
+        The training feature set.
+    y_train : pd.DataFrame
+        The training target set.
+    X_test : pd.DataFrame
+        The test feature set.
+    y_test : pd.DataFrame
+        The test target set.
+
+    Methods
+    -------
+    train(X_train, y_train, X_test, y_test, target='target')
+        Trains the model on the provided datasets.
+    get_metrics(return_df=True)
+        Returns the evaluation metrics as a DataFrame or dictionary.
+    analyze()
+        Analyzes the trained model and generates performance plots.
+
+    Examples
+    --------
+    >>> obj = AutoMLClassifier(model_name='RandomForest', scoring='roc_auc', tune=True, n_trials=30)
+    >>> obj.train(X_train, y_train, X_valid, y_valid, X_test, y_test, target='target')
+    >>> metrics_df = obj.get_metrics(return_df=True)
+    >>> print(metrics_df)
+                accuracy    roc_auc  f1_score
+    Train       0.95       0.98      0.94
+    Test        0.93       0.96      0.92
+    >>> obj.analyze()
+    >>> # Example of accessing best parameters
+    >>> print(obj.best_params)
+    {'n_estimators': 100, 'max_depth': 10, ...}
+    >>> # Example of using the trained model for predictions
+    >>> predictions = obj.model.predict(X_test)
+    """
+    def __init__(self, model_name, scoring='roc_auc', cv=3, tune=False, n_trials=50, random_state=42):
         self.cv = cv
         self.tune = tune
         self.n_trials = n_trials

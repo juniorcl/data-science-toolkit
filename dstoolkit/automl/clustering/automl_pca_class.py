@@ -6,7 +6,51 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.manifold import trustworthiness
 
+
 class AutoMLPCA:
+    """
+    AutoMLPCA is a class that automates the process of PCA model selection
+    and hyperparameter tuning using Optuna. It supports various evaluation metrics.
+
+    Parameters
+    ----------
+    model_name : str
+        The name of the PCA model to be used (e.g., 'PCA').
+    scoring : str, optional (default='explained_variance')
+        The evaluation metric to optimize during hyperparameter tuning.
+        Supported metrics include 'explained_variance', 'reconstruction_error', 'trustworthiness'.
+    n_trials : int, optional (default=50)
+        The number of trials for the hyperparameter optimization process.
+    random_state : int, optional (default=42)
+        The random seed for reproducibility.
+
+    Attributes
+    ----------
+    random_state : int
+        The random seed for reproducibility.
+    model_class : class
+        The PCA model class obtained from model_name.
+    scorer : str
+        The evaluation metric used for scoring.
+    func_metric : function
+        The function corresponding to the evaluation metric.
+
+    Methods
+    -------
+    train(X)
+        Fits the PCA model to the data X after hyperparameter tuning.
+    get_metrics(return_df=True)
+        Returns the PCA evaluation metrics.
+
+    Examples
+    --------
+    >>> obj = AutoMLPCA(scoring='explained_variance', n_trials=20)
+    >>> obj.train(X)
+    AutoMLPCA(...)
+    >>> obj.get_metrics()
+               Train
+    explained_variance    0.65
+    """
     def __init__(self, scoring='explained_variance', n_trials=50, random_state=42):
         self.scoring = scoring
         self.n_trials = n_trials

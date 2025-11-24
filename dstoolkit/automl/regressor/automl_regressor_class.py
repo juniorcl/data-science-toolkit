@@ -8,7 +8,56 @@ from .model_instance import get_model_instance
 
 from ..utils import get_regressor_eval_scoring, get_regressor_metrics, analyze_regressor
 
+
 class AutoMLRegressor:
+    """
+    AutoMLRegressor is a class that automates the process of training and tuning regression models. 
+    It supports hyperparameter optimization using Optuna and provides evaluation metrics for the trained models.
+
+    Parameters
+    ----------
+    model_name : str
+        The name of the regression model to use.
+    target : str
+        The name of the target variable in the training data.
+    scoring : str
+        The evaluation metric to use for model selection.
+    tune : bool, optional
+        Whether to perform hyperparameter tuning. Default is False.
+    n_trials : int, optional
+        The number of trials to run for hyperparameter tuning. Default is 50.
+    random_state : int, optional
+        The random seed for reproducibility. Default is 42.
+
+    Attributes
+    ----------
+    model_class : type
+        The class of the regression model to use.
+    scorer : callable
+        The function to use for evaluating model performance.
+    func_metric : callable
+        The function to use for computing the evaluation metric.
+
+    Methods
+    -------
+    train(X_train, y_train, X_valid, y_valid, X_test, y_test, target='target')
+        Trains the model on the provided training data and evaluates it on validation and test data.
+    get_metrics(return_df=True)
+        Returns the evaluation metrics for the trained model.
+    analyze()
+        Analyzes the trained model and provides visualizations.
+
+    Examples
+    --------
+    >>> obj = AutoMLRegressor(model_name='RandomForest', target='price', scoring='neg_mean_squared_error', tune=True, n_trials=100, random_state=123)
+    >>> obj.train(X_train, y_train, X_valid, y_valid, X_test, y_test, target='price')
+    >>> metrics_df = obj.get_metrics(return_df=True)
+    >>> print(metrics_df)
+                r2    neg_mean_squared_error
+    Train  0.85               -2500.0
+    Valid  0.80               -3000.0
+    Test   0.78               -3200.0
+    """
     def __init__(self, model_name, target='target', scoring='r2', tune=False, n_trials=50, random_state=42):
         self.tune = tune
         self.target = target
