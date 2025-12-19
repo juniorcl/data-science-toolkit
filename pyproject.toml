@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dstoolkit"
+version = "0.1.0"
+description = "Data Science Toolkit"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Clébio Júnior", email = "clebiomojunior@gmail.com" }
+]
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "lightgbm",
+    "catboost",
+    "matplotlib",
+    "optuna",
+    "scikit-learn",
+    "scipy",
+    "seaborn",
+    "shap",
+    "umap-learn"
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
