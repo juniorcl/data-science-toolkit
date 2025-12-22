@@ -57,8 +57,8 @@ class AutoMLCatBoost:
         self.target = target
         self.n_trials = n_trials
         self.random_state = random_state
-        self.scorer = utils.regressor_score(scoring, return_func=False)
-        self.func_metric = utils.regressor_function_score(scoring, return_func=True)
+        self.scorer = utils.get_regressor_score(scoring)
+        self.func_metric = utils.get_regressor_function_score(scoring)
 
     def _get_best_params(self):
         def objective(trial):
@@ -75,7 +75,7 @@ class AutoMLCatBoost:
     
     def _fit(self):
         params = self._get_best_params() if self.tune else {"random_state": self.random_state, "verbose": 0}
-        model = self.model_class(**params)
+        model = CatBoostRegressor(**params)
 
         model.fit(self.X_train, self.y_train[self.target], eval_set=[(self.X_valid, self.y_valid[self.target])])
 
