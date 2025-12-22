@@ -6,6 +6,7 @@ from .classifier_metrics import get_classifier_metrics
 from .lightgbm_params_space import get_lightgbm_params_space
 from .catboost_params_space import get_catboost_params_space
 from .classifier_function_score import get_classifier_function_score
+from .histgradientboosting_params_space import get_histgradientboosting_params_space
 
 from .plot_ks_curve import plot_ks_curve
 from .plot_roc_curve import plot_roc_curve
@@ -25,6 +26,7 @@ __all__ = [
     "get_lightgbm_params_space",
     "get_catboost_params_space",
     "get_classifier_function_score",
+    "get_histgradientboosting_params_space",
 
     "plot_ks_curve",
     "plot_roc_curve",
