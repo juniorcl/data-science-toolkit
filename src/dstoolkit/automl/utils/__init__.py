@@ -1,7 +1,7 @@
 from .ks_scorer import ks_scorer
 
 from .cluster_metrics import get_cluster_metrics
-from .regressor_metrics import get_regressor_metrics
+from ..regressor.utils.regressor_metrics import get_regressor_metrics
 from .classifier_metrics import get_classifier_metrics
 
 from .cluster_eval_scoring import get_cluster_eval_scoring

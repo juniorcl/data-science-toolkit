@@ -1,26 +1,19 @@
 import optuna
-import inspect
-
 import numpy as np
 import pandas as pd
 
+from . import utils
+from catboost import CatBoostRegressor
 from sklearn.model_selection import cross_validate
 
-from .params_space import get_params_space
-from .model_instance import get_model_instance
 
-from ..utils import get_regressor_eval_scoring, get_regressor_metrics, analyze_regressor
-
-
-class AutoMLRegressorCV:
+class AutoMLCatBoostCV:
     """
-    AutoMLRegressorCV is a class that automates the process of training and tuning regression models with cross-validation.
+    AutoMLCatBoostCV is a class that automates the process of training and tuning CatBoost regression models with cross-validation.
     It supports hyperparameter optimization using Optuna and provides evaluation metrics for the trained models.
 
     Parameters
     ----------
-    model_name : str
-        The name of the regression model to use.
     target : str
         The name of the target variable in the training data.
     scoring : str
@@ -36,8 +29,6 @@ class AutoMLRegressorCV:
 
     Attributes
     ----------
-    model_class : type
-        The class of the regression model to use.
     scorer : callable
         The function to use for evaluating model performance.
     func_metric : callable
@@ -63,21 +54,20 @@ class AutoMLRegressorCV:
     Valid  0.80               -3000.0
     Test   0.78               -3200.0
     """
-    def __init__(self, model_name, target='target', scoring='r2', cv=3, tune=False, n_trials=50, random_state=42):
+    def __init__(self, target='target', scoring='r2', cv=3, tune=False, n_trials=50, random_state=42):
         self.cv = cv
         self.tune = tune
         self.target = target
         self.n_trials = n_trials
-        self.model_name = model_name
         self.random_state = random_state
-        self.model_class = get_model_instance(model_name)
-        self.scorer = get_regressor_eval_scoring(scoring, return_func=False)
-        self.func_metric = get_regressor_eval_scoring(scoring, return_func=True)
+        self.scorer = utils.get_regressor_score(scoring)
+        self.func_metric = utils.get_regressor_function_score(scoring)
+        
 
     def _get_best_params(self):
         def objective(trial):
-            params = get_params_space(self.model_name, trial, self.random_state)
-            model = self.model_class(**params)
+            params = utils.get_catboost_params_space(trial, self.random_state)
+            model = CatBoostRegressor(**params)
             cv_results = cross_validate(
                 estimator=model, 
                 X=self.X_train,
@@ -117,22 +107,13 @@ class AutoMLRegressorCV:
         }
     
     def _fit(self):
-        model_sig = inspect.signature(self.model_class).parameters
-        init_params = {}
-        if 'random_state' in model_sig:
-            init_params['random_state'] = self.random_state
-        if 'verbose' in model_sig:
-            init_params['verbose'] = 0
-        elif 'verbosity' in model_sig:
-            init_params['verbosity'] = -1
-
-        params = self._get_best_params() if self.tune else init_params
-        model = self.model_class(**params)
+        params = self._get_best_params() if self.tune else {"random_state": self.random_state, "verbose": 0}
+        model = CatBoostRegressor(**params)
 
         results = {'Train CV': self._cross_validate(model)}
         model.fit(self.X_train, self.y_train[self.target])
         self.y_test['pred'] = model.predict(self.X_test)
-        results['Test'] = get_regressor_metrics(self.y_test, target=self.target, pred_col='pred')
+        results['Test'] = utils.get_regressor_metrics(self.y_test, target=self.target, pred_col='pred')
         return model, results
 
     def train(self, X_train, y_train, X_test, y_test, target='target'):
@@ -142,7 +123,15 @@ class AutoMLRegressorCV:
         self.model, self.results = self._fit()
 
     def get_metrics(self, return_df=True):
-        return pd.DataFrame(self.results).T if return_df else self.results
+        if return_df:
+            return pd.DataFrame(self.results).T
+        return self.results
     
     def analyze(self):
-        analyze_regressor(self.model, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
+        utils.plot_residuals(self.y_test, 'pred', self.target)
+        utils.plot_pred_vs_true(self.y_test, 'pred', self.target)
+        utils.plot_error_by_quantile(self.y_test, 'pred', self.target)
+        utils.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        utils.plot_feature_importance(self.model)
+        utils.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        utils.plot_shap_summary(self.model, self.X_train)

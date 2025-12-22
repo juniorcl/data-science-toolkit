@@ -1,7 +1,16 @@
-from .automl_regressor_class import AutoMLRegressor
-from .automl_regressor_cv_class import AutoMLRegressorCV
+from .automl_lightgbm_class import AutoMLLightGBM
+from .automl_catboost_class import AutoMLCatBoost
+from .automl_hist_gradient_boosting_class import AutoMLHistGradientBoosting
+
+from .automl_lightgbm_cv_class import AutoMLLightGBMCV
+from .automl_catboost_cv_class import AutoMLCatBoostCV
+from .automl_hist_gradient_boosting_cv_class import AutoMLHistGradientBoostingCV
 
 __all__ = [
-    "AutoMLRegressor",
-    "AutoMLRegressorCV",
+    "AutoMLLightGBM",
+    "AutoMLCatBoost",
+    "AutoMLHistGradientBoosting",
+    "AutoMLLightGBMCV",
+    "AutoMLCatBoostCV",
+    "AutoMLHistGradientBoostingCV",
 ]
