@@ -1,21 +1,18 @@
 import optuna
-
 import numpy as np
 import pandas as pd
 
-from sklearn.decomposition import PCA
 from sklearn.manifold import trustworthiness
+from sklearn.decomposition import PCA
 
 
-class AutoMLPCA:
+class PCAOptimizer:
     """
-    AutoMLPCA is a class that automates the process of PCA model selection
+    PCAOptimizer is a class that automates the process of PCA model selection
     and hyperparameter tuning using Optuna. It supports various evaluation metrics.
 
     Parameters
     ----------
-    model_name : str
-        The name of the PCA model to be used (e.g., 'PCA').
     scoring : str, optional (default='explained_variance')
         The evaluation metric to optimize during hyperparameter tuning.
         Supported metrics include 'explained_variance', 'reconstruction_error', 'trustworthiness'.
@@ -108,7 +105,7 @@ class AutoMLPCA:
         }
         return self
 
-    def train(self, X):
+    def fit(self, X):
         self.X = X
         return self._fit(self.X)
 

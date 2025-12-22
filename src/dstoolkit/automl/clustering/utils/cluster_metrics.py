@@ -1,4 +1,8 @@
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+from sklearn.metrics import (
+    silhouette_score, 
+    calinski_harabasz_score, 
+    davies_bouldin_score
+)
 
 
 def get_cluster_metrics(X, labels):
