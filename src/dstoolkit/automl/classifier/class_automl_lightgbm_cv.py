@@ -1,18 +1,13 @@
 import optuna
-import inspect
-
-import pandas as pd
 import numpy as np
+import pandas as pd
 
+from . import utils
+from lightgbm import LGBMClassifier
 from sklearn.model_selection import cross_validate
 
-from .params_space import get_params_space
-from .model_instance import get_model_instance
 
-from ..utils import get_classifier_eval_scoring, get_classifier_metrics, analyze_classifier, ks_scorer
-
-
-class AutoMLClassifierCV:
+class AutoMLLightGBMCV:
     """
     Automated Machine Learning Classifier with Hyperparameter Tuning. 
     This class provides an interface to train and evaluate classification models
@@ -20,8 +15,6 @@ class AutoMLClassifierCV:
 
     Parameters
     ----------
-    model_name : str
-        The name of the classification model to use.
     scoring : str, optional
         The evaluation metric to use for model selection. Default is 'roc_auc'.
     tune : bool, optional
@@ -81,15 +74,13 @@ class AutoMLClassifierCV:
     >>> # Example of using the trained model for predictions
     >>> predictions = obj.model.predict(X_test)
     """
-    def __init__(self, model_name, scoring='roc_auc', cv=3, tune=False, n_trials=50, random_state=42):
+    def __init__(self, scoring='roc_auc', cv=3, tune=False, n_trials=50, random_state=42):
         self.cv = cv
         self.tune = tune
         self.n_trials = n_trials
-        self.model_name = model_name
         self.random_state = random_state
-        self.model_class = get_model_instance(model_name)
-        self.scorer = get_classifier_eval_scoring(scoring, return_func=False)
-        self.func_metric = get_classifier_eval_scoring(scoring, return_func=True)
+        self.scorer = utils.get_classifier_score(scoring)
+        self.func_metric = utils.get_classifier_function_score(scoring)
 
     def _cross_validate(self, model):
         cv_results = cross_validate(
@@ -103,7 +94,7 @@ class AutoMLClassifierCV:
                 'recall': 'recall',
                 'f1': 'f1',
                 'roc_auc': 'roc_auc',
-                'ks': ks_scorer,
+                'ks': utils.ks_scorer,
                 'brier': 'neg_brier_score',
                 'log_loss': 'neg_log_loss'
             }
@@ -121,8 +112,8 @@ class AutoMLClassifierCV:
 
     def _get_best_params(self):
         def objective(trial):
-            params = get_params_space(self.model_name, trial, self.random_state)
-            model = self.model_class(**params)
+            params = utils.get_lightgbm_params_space(trial, self.random_state)
+            model = LGBMClassifier(**params)
             cv_results = cross_validate(
                 estimator=model,
                 X=self.X_train,
@@ -138,20 +129,8 @@ class AutoMLClassifierCV:
         return study.best_params
 
     def _fit(self):
-        model_sig = inspect.signature(self.model_class).parameters
-        init_params = {}
-
-        if 'random_state' in model_sig:
-            init_params['random_state'] = self.random_state
-        if 'verbose' in model_sig:
-            init_params['verbose'] = 0
-        if 'verbosity' in model_sig:
-            init_params['verbosity'] = -1
-        if 'n_jobs' in model_sig:
-            init_params['n_jobs'] = -1
-
-        self.best_params = self._get_best_params() if self.tune else init_params
-        self.model = self.model_class(**self.best_params)
+        self.best_params = self._get_best_params() if self.tune else {"random_state": self.random_state, "verbose": -1}
+        self.model = LGBMClassifier(**self.best_params)
 
         self.results = {'Train CV': self._cross_validate(self.model)}
 
@@ -159,7 +138,7 @@ class AutoMLClassifierCV:
         self.y_test['pred'] = self.model.predict(self.X_test)
         self.y_test['prob'] = self.model.predict_proba(self.X_test)[:, 1]
 
-        self.results['Test'] = get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
+        self.results['Test'] = utils.get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
         return self.model, self.results
 
     def train(self, X_train, y_train, X_test, y_test, target='target'):
@@ -175,4 +154,11 @@ class AutoMLClassifierCV:
         return self.results
 
     def analyze(self):
-        analyze_classifier(self.model, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
+        utils.plot_roc_curve(self.y_test, self.target, 'prob')
+        utils.plot_ks_curve(self.y_test, self.target)
+        utils.plot_precision_recall_curve(self.y_test, self.target, 'prob')
+        utils.plot_calibration_curve(self.y_test, self.target, strategy='uniform')
+        utils.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        utils.plot_feature_importance(self.model)
+        utils.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        utils.plot_shap_summary(self.model, self.X_train)

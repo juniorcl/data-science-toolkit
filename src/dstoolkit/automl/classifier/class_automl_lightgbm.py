@@ -1,15 +1,11 @@
 import optuna
-import inspect
-
 import pandas as pd
 
-from .params_space import get_params_space
-from .model_instance import get_model_instance
-
-from ..utils import get_classifier_eval_scoring, get_classifier_metrics, analyze_classifier
+from . import utils
+from lightgbm import LGBMClassifier
 
 
-class AutoMLClassifier:
+class AutoMLLightGBM:
     """
     Automated Machine Learning Classifier with Hyperparameter Tuning. 
     This class provides an interface to train and evaluate classification models
@@ -17,8 +13,6 @@ class AutoMLClassifier:
 
     Parameters
     ----------
-    model_name : str
-        The name of the classification model to use.
     scoring : str, optional
         The evaluation metric to use for model selection. Default is 'roc_auc'.
     tune : bool, optional
@@ -79,19 +73,17 @@ class AutoMLClassifier:
     >>> # Example of using the trained model for predictions
     >>> predictions = obj.model.predict(X_test)
     """
-    def __init__(self, model_name, scoring='roc_auc', tune=False, n_trials=50, random_state=42):
+    def __init__(self, scoring='roc_auc', tune=False, n_trials=50, random_state=42):
         self.tune = tune
         self.n_trials = n_trials
-        self.model_name = model_name
         self.random_state = random_state
-        self.model_class = get_model_instance(model_name)
-        self.scorer = get_classifier_eval_scoring(scoring, return_func=False)
-        self.func_metric = get_classifier_eval_scoring(scoring, return_func=True)
+        self.scorer = utils.get_classifier_score(scoring)
+        self.func_metric = utils.get_classifier_function_score(scoring)
 
     def _get_best_params(self):
         def objective(trial):
-            params = get_params_space(self.model_name, trial, self.random_state)
-            model = self.model_class(**params)
+            params = utils.get_lightgbm_params_space(trial, self.random_state)
+            model = LGBMClassifier(**params)
             model.fit(self.X_train, self.y_train[self.target])
             probs = model.predict_proba(self.X_valid)[:, 1]
             return self.func_metric(self.y_valid[self.target], probs)
@@ -102,39 +94,22 @@ class AutoMLClassifier:
         return study.best_params
 
     def _fit(self):
-        model_sig = inspect.signature(self.model_class).parameters
-        init_params = {}
+        self.best_params = self._get_best_params() if self.tune else {"random_state": self.random_state, "verbose": -1}
+        self.model = LGBMClassifier(**self.best_params)
 
-        if 'random_state' in model_sig:
-            init_params['random_state'] = self.random_state
-        if 'verbose' in model_sig:
-            init_params['verbose'] = 0
-        if 'verbosity' in model_sig:
-            init_params['verbosity'] = -1
-        if 'n_jobs' in model_sig:
-            init_params['n_jobs'] = -1
-
-        self.best_params = self._get_best_params() if self.tune else init_params
-        self.model = self.model_class(**self.best_params)
-
-        fit_sig = inspect.signature(self.model.fit).parameters
-        fit_args = {'X': self.X_train, 'y': self.y_train[self.target]}
-
-        if 'eval_set' in fit_sig and self.X_valid is not None:
-            fit_args['eval_set'] = [(self.X_valid, self.y_valid[self.target])]
-        if 'early_stopping_rounds' in fit_sig:
-            fit_args['early_stopping_rounds'] = 50
-
-        self.model.fit(**fit_args)
+        self.model.fit(
+            X=self.X_train, y=self.y_train[self.target], 
+            eval_set=[(self.X_valid, self.y_valid[self.target])]
+        )
 
         for X, y in [(self.X_train, self.y_train), (self.X_valid, self.y_valid), (self.X_test, self.y_test)]:
             y['pred'] = self.model.predict(X)
             y['prob'] = self.model.predict_proba(X)[:, 1]
 
         self.results = {
-            'Train': get_classifier_metrics(self.y_train, target=self.target, pred_col='pred', prob_col='prob'),
-            'Valid': get_classifier_metrics(self.y_valid, target=self.target, pred_col='pred', prob_col='prob'),
-            'Test': get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
+            'Train': utils.get_classifier_metrics(self.y_train, target=self.target, pred_col='pred', prob_col='prob'),
+            'Valid': utils.get_classifier_metrics(self.y_valid, target=self.target, pred_col='pred', prob_col='prob'),
+            'Test': utils.get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
         }
         return self.model, self.results
 
@@ -151,4 +126,11 @@ class AutoMLClassifier:
         return self.results
 
     def analyze(self):
-        analyze_classifier(self.model, self.X_train, self.y_train, self.y_test, self.target, self.scorer)
+        utils.plot_roc_curve(self.y_test, self.target, 'prob')
+        utils.plot_ks_curve(self.y_test, self.target)
+        utils.plot_precision_recall_curve(self.y_test, self.target, 'prob')
+        utils.plot_calibration_curve(self.y_test, self.target, strategy='uniform')
+        utils.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        utils.plot_feature_importance(self.model)
+        utils.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        utils.plot_shap_summary(self.model, self.X_train)

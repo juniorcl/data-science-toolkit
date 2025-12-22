@@ -1,7 +1,7 @@
-from .automl_classifier_class import AutoMLClassifier
-from .automl_classifier_cv_class import AutoMLClassifierCV
+from .class_automl_lightgbm import AutoMLLightGBM
+from .class_automl_lightgbm_cv import AutoMLLightGBMCV
 
 __all__ = [
-    "AutoMLClassifier",
-    "AutoMLClassifierCV",
+    "AutoMLLightGBM",
+    "AutoMLLightGBMCV",
 ]
