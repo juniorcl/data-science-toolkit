@@ -4,6 +4,7 @@ from .ks_scorer import ks_scorer
 from .classifier_score import get_classifier_score
 from .classifier_metrics import get_classifier_metrics
 from .lightgbm_params_space import get_lightgbm_params_space
+from .catboost_params_space import get_catboost_params_space
 from .classifier_function_score import get_classifier_function_score
 
 from .plot_ks_curve import plot_ks_curve
@@ -18,10 +19,13 @@ from .plot_precision_recall_curve import plot_precision_recall_curve
 __all__ = [
     "ks_score",
     "ks_scorer",
+
     "get_classifier_score",
     "get_classifier_metrics",
     "get_lightgbm_params_space",
+    "get_catboost_params_space",
     "get_classifier_function_score",
+
     "plot_ks_curve",
     "plot_roc_curve",
     "plot_shap_summary",
