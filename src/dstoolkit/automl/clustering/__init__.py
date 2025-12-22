@@ -1,7 +1,7 @@
-from .automl_clustering_class import AutoMLClustering
-from ..steps.pca_optimizer import AutoMLPCA
+from .automl_kmeans import AutoMLKMeans
+from .automl_gaussian_mixture import AutoMLGaussianMixture
 
-all__ = [
-    "AutoMLClustering",
-    "AutoMLPCA",
+__all__ = [
+    "AutoMLKMeans",
+    "AutoMLGaussianMixture",
 ]
