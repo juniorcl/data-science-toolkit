@@ -1,10 +1,10 @@
-from .class_automl_catboost import AutoMLCatBoost
-from .class_automl_lightgbm import AutoMLLightGBM
-from .class_automl_histgradientboosting import AutoMLHistGradientBoosting
+from .automl_catboost import AutoMLCatBoost
+from .automl_lightgbm import AutoMLLightGBM
+from .automl_hist_gradient_boosting import AutoMLHistGradientBoosting
 
-from .class_automl_catboost_cv import AutoMLCatBoostCV
-from .class_automl_lightgbm_cv import AutoMLLightGBMCV
-from .class_automl_histgradientboosting_cv import AutoMLHistGradientBoostingCV
+from .automl_catboost_cv import AutoMLCatBoostCV
+from .automl_lightgbm_cv import AutoMLLightGBMCV
+from .automl_hist_gradient_boosting_cv import AutoMLHistGradientBoostingCV
 
 
 __all__ = [
