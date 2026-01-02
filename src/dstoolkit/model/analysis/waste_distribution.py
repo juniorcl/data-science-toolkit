@@ -1,36 +1,52 @@
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def plot_waste_distribution(y, target, pred_col="pred"):
+def plot_waste_distribution(y_true, y_score, ax=None):
     """
-    Plot the distribution of residuals for given true labels and predicted values.
+    Plot the distribution of residuals (waste) for regression models.
 
-    This function computes the residuals (differences between true and predicted values)
-    and visualizes their distribution using a histogram.
+    The residuals are computed as (y_true - y_score) and visualized using
+    a histogram with an optional kernel density estimate (KDE).
 
     Parameters
     ----------
-    y : pd.DataFrame
-        DataFrame containing true labels and predicted values.
-    pred_col : str
-        Name of the column in `y` that contains predicted values.
-    target : str
-        Name of the column in `y` that contains true labels.
+    y_true : array-like of shape (n_samples,)
+        True target values.
+
+    y_score : array-like of shape (n_samples,)
+        Predicted target values.
+
+    ax : matplotlib.axes.Axes, optional
+        Matplotlib Axes object to plot on. If None, a new figure is created.
 
     Returns
     -------
-    None
-        This function does not return a value.
-        It displays a residuals plot.
-    
-    Raises
-    ------
-    KeyError
-        If `pred_col` or `target` are not found in the DataFrame `y`.
+    fig : matplotlib.figure.Figure
+        The matplotlib figure object.
+    ax : matplotlib.axes.Axes
+        The matplotlib axes object.
     """
-    residuals = y[target] - y[pred_col]
-    sns.histplot(residuals, kde=True)
-    plt.title("Waste Distribution")
-    plt.xlabel("Erro (y_true - y_pred)")
-    plt.show()
+    y_true = np.asarray(y_true)
+    y_score = np.asarray(y_score)
+
+    residuals = y_true - y_score
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 5))
+    else:
+        fig = ax.figure
+
+    sns.histplot(
+        residuals,
+        kde=True,
+        ax=ax,
+    )
+
+    ax.set_title("Residual (Waste) Distribution")
+    ax.set_xlabel("Residual (y_true − y_pred)")
+    ax.set_ylabel("Frequency")
+    ax.grid(alpha=0.3)
+
+    return fig, ax

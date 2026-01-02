@@ -3,13 +3,9 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, average_precision_score
 
 
-def plot_precision_recall_curve(y_true, y_score, figsize=(8, 5)):
+def plot_precision_recall_curve(y_true, y_score, ax=None):
     """
-    Plot the Precision–Recall curve for a binary classification model
-    without using sklearn's PrecisionRecallDisplay.
-
-    The function computes precision, recall and the Average Precision (AP),
-    and plots the Precision–Recall curve with consistent styling and size.
+    Plot the Precision–Recall curve for a binary classification model.
 
     Parameters
     ----------
@@ -19,51 +15,55 @@ def plot_precision_recall_curve(y_true, y_score, figsize=(8, 5)):
     y_score : array-like of shape (n_samples,)
         Predicted probabilities or decision scores for the positive class.
 
-    figsize : tuple, default=(8, 5)
-        Size of the matplotlib figure.
+    ax : matplotlib.axes.Axes, optional
+        Matplotlib Axes object to plot on. If None, a new figure is created.
 
     Returns
     -------
-    float
-        Average Precision (area under the Precision–Recall curve).
-    """
+    fig : matplotlib.figure.Figure
+        The matplotlib figure object.
+    ax : matplotlib.axes.Axes
+        The matplotlib axes object.
 
-    # Safety check
+    Raises
+    ------
+    ValueError
+        If y_true is not binary.
+    """
+    y_true = np.asarray(y_true)
+
     if set(np.unique(y_true)) - {0, 1}:
         raise ValueError("y_true must be binary (0/1).")
 
-    # Compute precision-recall curve
     precision, recall, _ = precision_recall_curve(y_true, y_score)
-
-    # Area under PR curve
     ap = average_precision_score(y_true, y_score)
 
-    # Plot
-    plt.figure(figsize=figsize)
-    plt.plot(
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 5))
+    else:
+        fig = ax.figure
+
+    ax.plot(
         recall,
         precision,
-        label=f"AP = {ap:.3f}",
-        color="tab:blue",
         linewidth=2,
+        label=f"AP = {ap:.3f}",
     )
 
-    # Baseline (prevalence)
     baseline = np.mean(y_true)
-    plt.hlines(
+    ax.hlines(
         baseline,
         xmin=0,
         xmax=1,
-        colors="gray",
         linestyles="--",
         alpha=0.6,
         label=f"Baseline = {baseline:.3f}",
     )
 
-    plt.xlabel("Recall")
-    plt.ylabel("Precision")
-    plt.title("Precision–Recall Curve")
-    plt.legend()
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.show()
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title("Precision–Recall Curve")
+    ax.legend(loc="best")
+    ax.grid(alpha=0.3)
+
+    return fig, ax

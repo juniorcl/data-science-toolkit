@@ -3,13 +3,9 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 
 
-def plot_roc_curve(y_true, y_score, figsize=(8, 5)):
+def plot_roc_curve(y_true, y_score, ax=None):
     """
-    Plot the ROC curve for a binary classification model without using
-    sklearn's RocCurveDisplay.
-
-    The function computes the False Positive Rate (FPR), True Positive Rate (TPR)
-    and the ROC AUC, and plots the ROC curve with consistent styling and size.
+    Plot the ROC curve for a binary classification model.
 
     Parameters
     ----------
@@ -19,49 +15,53 @@ def plot_roc_curve(y_true, y_score, figsize=(8, 5)):
     y_score : array-like of shape (n_samples,)
         Predicted probabilities or decision scores for the positive class.
 
-    figsize : tuple, default=(8, 5)
-        Size of the matplotlib figure.
+    ax : matplotlib.axes.Axes, optional
+        Matplotlib Axes object to plot on. If None, a new figure is created.
 
     Returns
     -------
-    float
-        ROC AUC score.
-    """
+    fig : matplotlib.figure.Figure
+        The matplotlib figure object.
+    ax : matplotlib.axes.Axes
+        The matplotlib axes object.
 
-    # Safety check
+    Raises
+    ------
+    ValueError
+        If y_true is not binary.
+    """
+    y_true = np.asarray(y_true)
+
     if set(np.unique(y_true)) - {0, 1}:
         raise ValueError("y_true must be binary (0/1).")
 
-    # Compute ROC curve
     fpr, tpr, _ = roc_curve(y_true, y_score)
-
-    # Area under ROC curve
     auc = roc_auc_score(y_true, y_score)
 
-    # Plot
-    plt.figure(figsize=figsize)
-    plt.plot(
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 5))
+    else:
+        fig = ax.figure
+
+    ax.plot(
         fpr,
         tpr,
-        label=f"AUC = {auc:.3f}",
-        color="tab:blue",
         linewidth=2,
+        label=f"AUC = {auc:.3f}",
     )
 
-    # Baseline (random classifier)
-    plt.plot(
+    ax.plot(
         [0, 1],
         [0, 1],
         linestyle="--",
-        color="gray",
         alpha=0.6,
         label="Random",
     )
 
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate (Recall)")
-    plt.title("ROC Curve")
-    plt.legend()
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.show()
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate (Recall)")
+    ax.set_title("ROC Curve")
+    ax.legend(loc="best")
+    ax.grid(alpha=0.3)
+
+    return fig, ax

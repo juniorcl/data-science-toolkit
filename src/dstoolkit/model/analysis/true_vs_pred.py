@@ -1,15 +1,14 @@
 import numpy as np
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def plot_error_by_quantile(y_true, y_score, q=5, ax=None):
+def plot_true_vs_pred(y_true, y_score, ax=None):
     """
-    Plot the absolute prediction error grouped by target quantiles.
+    Plot predicted values against true values using a scatter plot.
 
-    The target variable is split into quantiles, and the absolute
-    prediction error is visualized for each quantile using a boxplot.
+    This visualization helps assess model fit and bias by comparing
+    predictions to the ideal y = x reference line.
 
     Parameters
     ----------
@@ -17,8 +16,6 @@ def plot_error_by_quantile(y_true, y_score, q=5, ax=None):
         True target values.
     y_score : array-like
         Predicted target values.
-    q : int, default=5
-        Number of quantiles to compute.
     ax : matplotlib.axes.Axes, optional
         Matplotlib Axes object to plot on. If None, a new figure is created.
 
@@ -40,29 +37,25 @@ def plot_error_by_quantile(y_true, y_score, q=5, ax=None):
     if y_true.shape[0] != y_score.shape[0]:
         raise ValueError("y_true and y_score must have the same length.")
 
-    df = pd.DataFrame({
-        "y_true": y_true,
-        "y_score": y_score
-    })
-
-    df["quantile"] = pd.qcut(df["y_true"], q=q, duplicates="drop")
-    df["abs_error"] = np.abs(df["y_true"] - df["y_score"])
-
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 5))
     else:
         fig = ax.figure
 
-    sns.boxplot(
-        x="quantile",
-        y="abs_error",
-        data=df,
-        ax=ax
+    sns.scatterplot(x=y_true, y=y_score, ax=ax)
+
+    min_val = min(y_true.min(), y_score.min())
+    max_val = max(y_true.max(), y_score.max())
+
+    ax.plot(
+        [min_val, max_val],
+        [min_val, max_val],
+        linestyle="--",
+        color="red"
     )
 
-    ax.set_title("Absolute Error by Target Quantile")
-    ax.set_xlabel("Target Quantile")
-    ax.set_ylabel("Absolute Error")
-    ax.tick_params(axis="x", rotation=45)
+    ax.set_xlabel("y_true")
+    ax.set_ylabel("y_pred")
+    ax.set_title("y_true vs y_pred")
 
     return fig, ax
