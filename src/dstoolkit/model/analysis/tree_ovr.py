@@ -3,61 +3,73 @@ import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 
 
-def plot_tree_ovr(X, labels, max_depth=4, figsize=(16, 12), class_names=None):
+def plot_tree_ovr(X, labels, max_depth=4, class_names=None):
     """
-    Generates One-vs-Rest (OvR) decision trees to explain each label individually.
+    Generate One-vs-Rest (OvR) decision trees to explain each label individually.
+
+    For each unique label, a binary decision tree is trained to distinguish
+    that label versus all others, and a corresponding tree visualization
+    is generated.
 
     Parameters
     ----------
-    X : pd.DataFrame
-        Feature set.
-    labels : array-like
-        Classification or cluster labels.
-    max_depth : int, optional
-        Maximum depth of the decision tree.
-    figsize : tuple, optional
-        Figure size for the plots.
+    X : array-like or pandas.DataFrame of shape (n_samples, n_features)
+        Feature matrix.
+
+    labels : array-like of shape (n_samples,)
+        Class or cluster labels.
+
+    max_depth : int, default=4
+        Maximum depth of the decision trees.
+
     class_names : dict, optional
         Optional mapping {label: friendly_name}.
 
     Returns
     -------
-    trees : dict
-        Key: label  
-        Value: trained decision tree model explaining that label versus all others.
+    results : dict
+        Dictionary indexed by label, where each value is a dict with:
+        - "tree": trained DecisionTreeClassifier
+        - "fig": matplotlib.figure.Figure
+        - "ax": matplotlib.axes.Axes
     """
-    
+    labels = np.asarray(labels)
     unique_classes = np.unique(labels)
-    labels = np.array(labels)
-    trees = {}
+
+    results = {}
 
     for cls in unique_classes:
-
-        # One-vs-Rest
+        # One-vs-Rest target
         y_binary = (labels == cls).astype(int)
 
-        # Model
-        tree = DecisionTreeClassifier(max_depth=max_depth, random_state=42)
+        # Train model
+        tree = DecisionTreeClassifier(
+            max_depth=max_depth,
+            random_state=42,
+        )
         tree.fit(X, y_binary)
 
-        # Nome amigável
-        cls_name = class_names[cls] if class_names else str(cls)
+        # Friendly name
+        cls_name = class_names.get(cls, str(cls)) if class_names else str(cls)
 
-        # Plot
-        plt.figure(figsize=figsize)
-        plt.title(f"Decision Tree - One vs Rest (Label {cls_name})")
+        # Create figure
+        fig, ax = plt.subplots(figsize=(16, 12))
+        ax.set_title(f"Decision Tree – One vs Rest (Label {cls_name})")
 
         plot_tree(
             tree,
-            feature_names=X.columns,
+            feature_names=X.columns if hasattr(X, "columns") else None,
             class_names=[f"Not {cls_name}", cls_name],
             filled=True,
             proportion=True,
-            rounded=True
+            rounded=True,
+            ax=ax,
         )
 
-        plt.show()
+        results[cls] = {
+            "tree": tree,
+            "fig": fig,
+            "ax": ax,
+        }
 
-        trees[cls] = tree
-
-    return trees
+    return results

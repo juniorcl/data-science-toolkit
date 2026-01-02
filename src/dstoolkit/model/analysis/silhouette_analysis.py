@@ -4,43 +4,52 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_samples, silhouette_score
 
 
-def plot_silhouette_analysis(X, labels, metric='euclidean'):
+def plot_silhouette_analysis(X, labels, metric="euclidean", ax=None):
     """
-    Plot the silhouette analysis for the given clustering results.
+    Plot the silhouette analysis for a clustering result.
 
-    This function computes and visualizes the silhouette scores for each sample
-    in the dataset, providing insights into the quality of the clustering.
+    This function computes and visualizes the silhouette scores for each sample,
+    allowing an assessment of cluster cohesion and separation.
 
     Parameters
     ----------
-    X : pd.DataFrame
-        The input data to cluster.
-    labels : array-like, shape (n_samples,)
-        The cluster labels for each sample.
-    metric : str, optional
-        The distance metric to use for computing the silhouette scores.
-        Default is 'euclidean'.
+    X : array-like of shape (n_samples, n_features)
+        Input data used for clustering.
+
+    labels : array-like of shape (n_samples,)
+        Cluster labels for each sample.
+
+    metric : str, default="euclidean"
+        Distance metric used to compute silhouette scores.
+
+    ax : matplotlib.axes.Axes, optional
+        Matplotlib Axes object to plot on. If None, a new figure is created.
 
     Returns
     -------
-    None
-        This function does not return a value, but it displays a plot
-        of the silhouette analysis.
-    
-    Raises
-    ------
-    None
+    fig : matplotlib.figure.Figure
+        The matplotlib figure object.
+    ax : matplotlib.axes.Axes
+        The matplotlib axes object.
     """
+    X = np.asarray(X)
+    labels = np.asarray(labels)
+
     silhouette_avg = silhouette_score(X, labels, metric=metric)
     sample_silhouette_values = silhouette_samples(X, labels, metric=metric)
 
-    n_clusters = len(np.unique(labels))
-    y_lower = 10
+    unique_labels = np.unique(labels)
+    n_clusters = len(unique_labels)
 
-    plt.figure(figsize=(8, 6))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 6))
+    else:
+        fig = ax.figure
+
+    y_lower = 10
     colors = sns.color_palette("tab10", n_clusters)
 
-    for i, c in enumerate(np.unique(labels)):
+    for i, c in enumerate(unique_labels):
         cluster_silhouette_vals = sample_silhouette_values[labels == c]
         cluster_silhouette_vals.sort()
 
@@ -48,7 +57,7 @@ def plot_silhouette_analysis(X, labels, metric='euclidean'):
         y_upper = y_lower + size_cluster_i
 
         color = colors[i % len(colors)]
-        plt.fill_betweenx(
+        ax.fill_betweenx(
             np.arange(y_lower, y_upper),
             0,
             cluster_silhouette_vals,
@@ -57,14 +66,24 @@ def plot_silhouette_analysis(X, labels, metric='euclidean'):
             alpha=0.7,
         )
 
-        plt.text(-0.05, y_lower + 0.5 * size_cluster_i, str(c))
+        ax.text(
+            -0.05,
+            y_lower + 0.5 * size_cluster_i,
+            str(c),
+        )
+
         y_lower = y_upper + 10
 
-    plt.axvline(x=silhouette_avg, color="red", linestyle="--", label=f"Média = {silhouette_avg:.3f}")
-    plt.title("Gráfico de Silhueta (Silhouette Plot)")
-    plt.xlabel("Coeficiente de Silhueta")
-    plt.ylabel("Cluster")
-    plt.legend(loc="best")
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.show()
+    ax.axvline(
+        x=silhouette_avg,
+        linestyle="--",
+        label=f"Average = {silhouette_avg:.3f}",
+    )
+
+    ax.set_title("Silhouette Analysis")
+    ax.set_xlabel("Silhouette Coefficient")
+    ax.set_ylabel("Cluster")
+    ax.legend(loc="best")
+    ax.grid(alpha=0.3)
+
+    return fig, ax

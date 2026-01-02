@@ -3,38 +3,57 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 
-def plot_pca_projection(X, labels):
+def plot_pca_projection(X, labels, figsize=(7, 6), random_state=42):
     """
-    Plots the PCA projection of clustered data.
+    Plot a 2D PCA projection of clustered data.
 
-    It plots the first two principal components of the data points, 
-    coloring them according to their cluster labels.
-    
     Parameters
     ----------
-    X : pd.DataFrame
-        The input data to be projected.
-    labels : array-like
-        The cluster labels for each data point.
+    X : pd.DataFrame or array-like of shape (n_samples, n_features)
+        Input data to be projected.
+
+    labels : array-like of shape (n_samples,)
+        Cluster labels.
+
+    figsize : tuple, default=(7, 6)
+        Size of the matplotlib figure.
+
+    random_state : int, default=42
+        Random seed for PCA reproducibility.
 
     Returns
     -------
-    None
-        This function does not return a value.
-        It displays a scatter plot of the PCA projection.
+    fig : matplotlib.figure.Figure
+        The created figure.
+
+    ax : matplotlib.axes.Axes
+        The axes containing the plot.
 
     Raises
     ------
     ValueError
-        If the input data X has less than 2 features.
+        If X has less than 2 features.
     """
-    pca = PCA(n_components=2, random_state=42)
+    if X.shape[1] < 2:
+        raise ValueError("X must have at least 2 features for PCA projection.")
+
+    pca = PCA(n_components=2, random_state=random_state)
     X_pca = pca.fit_transform(X)
 
-    plt.figure(figsize=(7, 6))
-    sns.scatterplot(x=X_pca[:, 0], y=X_pca[:, 1], hue=labels, palette="tab10", s=50)
-    plt.title("PCA Projection of Clusters")
-    plt.xlabel("Component 1")
-    plt.ylabel("Component 2")
-    plt.legend(title="Cluster")
-    plt.show()
+    fig, ax = plt.subplots(figsize=figsize)
+
+    sns.scatterplot(
+        x=X_pca[:, 0],
+        y=X_pca[:, 1],
+        hue=labels,
+        palette="tab10",
+        s=50,
+        ax=ax,
+    )
+
+    ax.set_title("PCA Projection of Clusters")
+    ax.set_xlabel("Component 1")
+    ax.set_ylabel("Component 2")
+    ax.legend(title="Cluster")
+
+    return fig, ax
