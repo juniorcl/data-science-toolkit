@@ -67,5 +67,3 @@ def plot_precision_recall_curve(y_true, y_score, figsize=(8, 5)):
     plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.show()
-
-    return ap

@@ -1,9 +1,10 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import ks_2samp
 
 
-def plot_ks_curve(y, target, prob_col="prob"):
+def plot_ks_curve(y_true, y_score):
     """
     Plot the KS (Kolmogorov-Smirnov) cumulative distribution curves for a
     binary classification model using predicted probabilities.
@@ -33,35 +34,35 @@ def plot_ks_curve(y, target, prob_col="prob"):
         If required columns are missing or if the target is not binary.
     """
 
-    if set(y[target].unique()) - {0, 1}:
+    if set(y_true.unique()) - {0, 1}:
         raise ValueError("Target column must be binary (0/1).")
 
     # Separate predicted probabilities by class
-    scores_1 = y.loc[y[target] == 1, prob_col]
-    scores_0 = y.loc[y[target] == 0, prob_col]
+    scores_1 = y_score[y_true == 1]
+    scores_0 = y_score[y_true == 0]
 
     # Compute KS statistic using SciPy
     ks_value, _ = ks_2samp(scores_1, scores_0)
 
     # Prepare cumulative distributions for plotting
-    df = y[[target, prob_col]].copy()
-    df = df.sort_values(prob_col)
+    df = pd.DataFrame({'target': y_true, 'score': y_score})
+    df = df.sort_values('score')
 
-    total_1 = (df[target] == 1).sum()
-    total_0 = (df[target] == 0).sum()
+    total_1 = (df['target'] == 1).sum()
+    total_0 = (df['target'] == 0).sum()
 
-    df["cum_1"] = (df[target] == 1).cumsum() / total_1
-    df["cum_0"] = (df[target] == 0).cumsum() / total_0
+    df["cum_1"] = (df['target'] == 1).cumsum() / total_1
+    df["cum_0"] = (df['target'] == 0).cumsum() / total_0
 
     # Point of maximum difference → not from scipy (scipy does not return threshold)
     df["diff"] = np.abs(df["cum_1"] - df["cum_0"])
     ks_idx = df["diff"].idxmax()
-    ks_threshold = df.loc[ks_idx, prob_col]
+    ks_threshold = df.loc[ks_idx, 'score']
 
     # Plot
     plt.figure(figsize=(8, 5))
-    plt.plot(df[prob_col], df["cum_1"], label="Classe 1 (CDF)", color="tab:blue")
-    plt.plot(df[prob_col], df["cum_0"], label="Classe 0 (CDF)", color="tab:orange")
+    plt.plot(df['score'], df["cum_1"], label="Classe 1 (CDF)", color="tab:blue")
+    plt.plot(df['score'], df["cum_0"], label="Classe 0 (CDF)", color="tab:orange")
 
     plt.vlines(
         ks_threshold,
