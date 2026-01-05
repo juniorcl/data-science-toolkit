@@ -9,11 +9,9 @@ description = "Data Science Toolkit"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-
 authors = [
     { name = "Clébio Júnior", email = "clebiomojunior@gmail.com" }
 ]
-
 dependencies = [
     "numpy",
     "pandas",
@@ -28,8 +26,20 @@ dependencies = [
     "umap-learn"
 ]
 
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov"
+]
+
 [tool.setuptools]
 package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"
