@@ -55,12 +55,16 @@ The library follows a **scikit-learn–inspired API**, focusing on:
 ```text
 src/dstoolkit/
 ├── automl/                # AutoML pipelines
-├── feature_engine/        # Feature engineering utilities
+├── feature/               # Feature engineering utilities
+│   ├── engineering/       # Classes for feature engineering
+│   └── monitoring/        # Function for feature monitoring
+│   └── selection/         # Class for feature selection
 ├── metrics/               # Custom metrics and plots
+│   └── plots/             # Plots for evaluation
+│   └── scores/            # Function for metrics evaluation
 ├── model/
 │   ├── analysis/          # Model diagnostics and visualization
 │   └── interpretability/  # Explainability tools
-├── preprocessing/         # Data preprocessing helpers
 ```
 
 Example notebooks demonstrating usage can be found in the `notebooks/` directory.
