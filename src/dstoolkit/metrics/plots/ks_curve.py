@@ -40,6 +40,9 @@ def plot_ks_curve(y_true, y_score, ax=None):
     y_true = pd.Series(y_true)
     y_score = pd.Series(y_score)
 
+    if len(y_true) != len(y_score):
+        raise ValueError("y_true and y_score must have the same length.")
+
     if set(y_true.unique()) - {0, 1}:
         raise ValueError("y_true must be binary (0/1).")
 
