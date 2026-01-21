@@ -1,15 +1,22 @@
-import optuna
 import numpy as np
+import optuna
 import pandas as pd
-
-from . import utils
 from catboost import CatBoostClassifier
 from sklearn.model_selection import cross_validate
+
+from dstoolkit.metrics import plots, scores
+from dstoolkit.model import analysis, interpretability
+
+from .utils import (
+    get_catboost_params_space,
+    get_classifier_function_score,
+    get_classifier_score,
+)
 
 
 class AutoMLCatBoostCV:
     """
-    Automated Machine Learning Classifier with Hyperparameter Tuning. 
+    Automated Machine Learning Classifier with Hyperparameter Tuning.
     This class provides an interface to train and evaluate classification models
     with optional hyperparameter tuning using Optuna.
 
@@ -25,7 +32,7 @@ class AutoMLCatBoostCV:
         The random seed for reproducibility. Default is 42.
     cv : int or cross-validation generator, optional
         The cross-validation strategy to use for hyperparameter tuning and evaluation. Default is 3.
-                
+
     Attributes
     ----------
     model : object
@@ -74,13 +81,16 @@ class AutoMLCatBoostCV:
     >>> # Example of using the trained model for predictions
     >>> predictions = obj.model.predict(X_test)
     """
-    def __init__(self, scoring='roc_auc', cv=3, tune=False, n_trials=50, random_state=42):
+
+    def __init__(
+        self, scoring="roc_auc", cv=3, tune=False, n_trials=50, random_state=42
+    ):
         self.cv = cv
         self.tune = tune
         self.n_trials = n_trials
         self.random_state = random_state
-        self.scorer = utils.get_classifier_score(scoring)
-        self.func_metric = utils.get_classifier_function_score(scoring)
+        self.scorer = get_classifier_score(scoring)
+        self.func_metric = get_classifier_function_score(scoring)
 
     def _cross_validate(self, model):
         cv_results = cross_validate(
@@ -89,59 +99,67 @@ class AutoMLCatBoostCV:
             y=self.y_train[self.target],
             cv=self.cv,
             scoring={
-                'balanced_accuracy': 'balanced_accuracy',
-                'precision': 'precision',
-                'recall': 'recall',
-                'f1': 'f1',
-                'roc_auc': 'roc_auc',
-                'ks': utils.ks_scorer,
-                'brier': 'neg_brier_score',
-                'log_loss': 'neg_log_loss'
-            }
+                "balanced_accuracy": "balanced_accuracy",
+                "precision": "precision",
+                "recall": "recall",
+                "f1": "f1",
+                "roc_auc": "roc_auc",
+                "ks": scores.ks_scorer,
+                "brier": "neg_brier_score",
+                "log_loss": "neg_log_loss",
+                "avg_precision_lift": scores.average_precision_lift_scorer,
+            },
         )
         return {
-            'Balanced Accuracy': cv_results['test_balanced_accuracy'].mean(),
-            'Precision': cv_results['test_precision'].mean(),
-            'Recall': cv_results['test_recall'].mean(),
-            'F1': cv_results['test_f1'].mean(),
-            'AUC': cv_results['test_roc_auc'].mean(),
-            'KS': cv_results['test_ks'].mean(),
-            'Brier': abs(cv_results['test_brier'].mean()),
-            'LogLoss': abs(cv_results['test_log_loss'].mean())
+            "Balanced Accuracy": cv_results["test_balanced_accuracy"].mean(),
+            "Precision": cv_results["test_precision"].mean(),
+            "Recall": cv_results["test_recall"].mean(),
+            "F1": cv_results["test_f1"].mean(),
+            "AUC": cv_results["test_roc_auc"].mean(),
+            "KS": cv_results["test_ks"].mean(),
+            "Brier": abs(cv_results["test_brier"].mean()),
+            "LogLoss": abs(cv_results["test_log_loss"].mean()),
+            "Avg Precision Lift": abs(cv_results["test_avg_precision_lift"].mean()),
         }
 
     def _get_best_params(self):
         def objective(trial):
-            params = utils.get_catboost_params_space(trial, self.random_state)
+            params = get_catboost_params_space(trial, self.random_state)
             model = CatBoostClassifier(**params)
             cv_results = cross_validate(
                 estimator=model,
                 X=self.X_train,
                 y=self.y_train[self.target],
                 cv=self.cv,
-                scoring=self.scorer
+                scoring=self.scorer,
             )
-            return np.mean(cv_results['test_score'])
+            return np.mean(cv_results["test_score"])
 
         optuna.logging.set_verbosity(optuna.logging.WARNING)
-        study = optuna.create_study(direction='maximize')
+        study = optuna.create_study(direction="maximize")
         study.optimize(objective, n_trials=self.n_trials)
         return study.best_params
 
     def _fit(self):
-        self.best_params = self._get_best_params() if self.tune else {"random_state": self.random_state, "verbose": 0}
+        self.best_params = (
+            self._get_best_params()
+            if self.tune
+            else {"random_state": self.random_state, "verbose": 0}
+        )
         self.model = CatBoostClassifier(**self.best_params)
 
-        self.results = {'Train CV': self._cross_validate(self.model)}
+        self.results = {"Train CV": self._cross_validate(self.model)}
 
         self.model.fit(self.X_train, self.y_train[self.target])
-        self.y_test['pred'] = self.model.predict(self.X_test)
-        self.y_test['prob'] = self.model.predict_proba(self.X_test)[:, 1]
+        self.y_test["pred"] = self.model.predict(self.X_test)
+        self.y_test["prob"] = self.model.predict_proba(self.X_test)[:, 1]
 
-        self.results['Test'] = utils.get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
+        self.results["Test"] = scores.get_classifier_metrics(
+            self.y_test, target=self.target, pred_col="pred", prob_col="prob"
+        )
         return self.model, self.results
 
-    def train(self, X_train, y_train, X_test, y_test, target='target'):
+    def train(self, X_train, y_train, X_test, y_test, target="target"):
         self.target = target
         self.X_train, self.X_test = X_train, X_test
         self.y_train, self.y_test = y_train, y_test
@@ -154,11 +172,17 @@ class AutoMLCatBoostCV:
         return self.results
 
     def analyze(self):
-        utils.plot_roc_curve(self.y_test, self.target, 'prob')
-        utils.plot_ks_curve(self.y_test, self.target)
-        utils.plot_precision_recall_curve(self.y_test, self.target, 'prob')
-        utils.plot_calibration_curve(self.y_test, self.target, strategy='uniform')
-        utils.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
-        utils.plot_feature_importance(self.model)
-        utils.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
-        utils.plot_shap_summary(self.model, self.X_train)
+        plots.plot_roc_curve(self.y_test[self.target], self.y_test["prob"])
+        plots.plot_ks_curve(self.y_test[self.target], self.y_test["prob"])
+        plots.plot_precision_recall_curve(self.y_test[self.target], self.y_test["prob"])
+        plots.plot_calibration_curve(
+            self.y_test[self.target], self.y_test["prob"], strategy="uniform"
+        )
+        analysis.plot_learning_curve(
+            self.model, self.X_train, self.y_train[self.target], scoring=self.scorer
+        )
+        interpretability.plot_feature_importance(self.model)
+        interpretability.plot_permutation_importance(
+            self.model, self.X_train, self.y_train[self.target], scoring=self.scorer
+        )
+        interpretability.plot_shap_tree_summary(self.model, self.X_train)
