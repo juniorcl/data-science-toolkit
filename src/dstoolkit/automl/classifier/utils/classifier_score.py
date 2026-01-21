@@ -1,5 +1,4 @@
-from .ks_score import ks_score
-from .ks_scorer import ks_scorer
+from dstoolkit.metrics.scores import average_precision_lift_scorer, ks_scorer
 
 
 def get_classifier_score(scoring):
@@ -24,13 +23,14 @@ def get_classifier_score(scoring):
         If the specified scoring metric is not supported.
     """
     scorers = {
-        'ks': ks_scorer,
-        'roc_auc': 'roc_auc',
-        'brier': 'neg_brier_score',
-        'log_loss': 'neg_log_loss',
+        "ks": ks_scorer,
+        "roc_auc": "roc_auc",
+        "brier": "neg_brier_score",
+        "log_loss": "neg_log_loss",
+        "avg_precison_lift": average_precision_lift_scorer,
     }
 
     if scoring not in scorers:
         raise ValueError(f"Metric '{scoring}' is not supported.")
-    
+
     return scorers[scoring]
