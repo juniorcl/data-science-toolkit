@@ -1,10 +1,19 @@
 import optuna
+
 import numpy as np
 import pandas as pd
 
-from . import utils
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection import cross_validate
+
+from dstoolkit.model import analysis, interpretability
+from dstoolkit.metrics import plots, scores
+
+from .utils import (
+    get_histgradientboosting_params_space,
+    get_classifier_function_score,
+    get_classifier_score,
+)
 
 
 class AutoMLHistGradientBoostingCV:
@@ -79,8 +88,8 @@ class AutoMLHistGradientBoostingCV:
         self.tune = tune
         self.n_trials = n_trials
         self.random_state = random_state
-        self.scorer = utils.get_classifier_score(scoring)
-        self.func_metric = utils.get_classifier_function_score(scoring)
+        self.scorer = get_classifier_score(scoring)
+        self.func_metric = get_classifier_function_score(scoring)
 
     def _cross_validate(self, model):
         cv_results = cross_validate(
@@ -94,9 +103,10 @@ class AutoMLHistGradientBoostingCV:
                 'recall': 'recall',
                 'f1': 'f1',
                 'roc_auc': 'roc_auc',
-                'ks': utils.ks_scorer,
+                'ks': scores.ks_scorer,
                 'brier': 'neg_brier_score',
-                'log_loss': 'neg_log_loss'
+                'log_loss': 'neg_log_loss',
+                "avg_precision_lift": scores.average_precision_lift_scorer,
             }
         )
         return {
@@ -107,12 +117,13 @@ class AutoMLHistGradientBoostingCV:
             'AUC': cv_results['test_roc_auc'].mean(),
             'KS': cv_results['test_ks'].mean(),
             'Brier': abs(cv_results['test_brier'].mean()),
-            'LogLoss': abs(cv_results['test_log_loss'].mean())
+            'LogLoss': abs(cv_results['test_log_loss'].mean()),
+            "Avg Precision Lift": cv_results["test_avg_precision_lift"].mean(),
         }
 
     def _get_best_params(self):
         def objective(trial):
-            params = utils.get_histgradientboosting_params_space(trial, self.random_state)
+            params = get_histgradientboosting_params_space(trial, self.random_state)
             model = HistGradientBoostingClassifier(**params)
             cv_results = cross_validate(
                 estimator=model,
@@ -129,7 +140,11 @@ class AutoMLHistGradientBoostingCV:
         return study.best_params
 
     def _fit(self):
-        self.best_params = self._get_best_params() if self.tune else {"random_state": self.random_state, "verbose": -1}
+        self.best_params = (
+            self._get_best_params() 
+            if self.tune 
+            else {"random_state": self.random_state, "verbose": -1}
+        )
         self.model = HistGradientBoostingClassifier(**self.best_params)
 
         self.results = {'Train CV': self._cross_validate(self.model)}
@@ -138,7 +153,7 @@ class AutoMLHistGradientBoostingCV:
         self.y_test['pred'] = self.model.predict(self.X_test)
         self.y_test['prob'] = self.model.predict_proba(self.X_test)[:, 1]
 
-        self.results['Test'] = utils.get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
+        self.results['Test'] = scores.get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
         return self.model, self.results
 
     def train(self, X_train, y_train, X_test, y_test, target='target'):
@@ -154,10 +169,10 @@ class AutoMLHistGradientBoostingCV:
         return self.results
 
     def analyze(self):
-        utils.plot_roc_curve(self.y_test, self.target, 'prob')
-        utils.plot_ks_curve(self.y_test, self.target)
-        utils.plot_precision_recall_curve(self.y_test, self.target, 'prob')
-        utils.plot_calibration_curve(self.y_test, self.target, strategy='uniform')
-        utils.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
-        utils.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
-        utils.plot_shap_summary(self.model, self.X_train)
+        plots.plot_roc_curve(self.y_test[self.target], self.y_test["prob"])
+        plots.plot_ks_curve(self.y_test[self.target], self.y_test["prob"])
+        plots.plot_precision_recall_curve(self.y_test[self.target], self.y_test["prob"])
+        plots.plot_calibration_curve(self.y_test[self.target], self.y_test["prob"], strategy="uniform")
+        analysis.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        interpretability.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        interpretability.plot_shap_tree_summary(self.model, self.X_train)
