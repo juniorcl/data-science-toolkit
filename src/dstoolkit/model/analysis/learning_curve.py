@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import learning_curve, KFold
 
 
-def plot_learning_curve(model, X, y, scoring, cv=None, n_jobs=-1, ax=None):
+def plot_learning_curve(model, X, y, scoring, cv=None, n_jobs=None, ax=None):
     """
     Plot the learning curve of a machine learning estimator.
 
