@@ -27,7 +27,7 @@ def get_classifier_score(scoring):
         "roc_auc": "roc_auc",
         "brier": "neg_brier_score",
         "log_loss": "neg_log_loss",
-        "avg_precison_lift": average_precision_lift_scorer,
+        "avg_precision_lift": average_precision_lift_scorer,
     }
 
     if scoring not in scorers:
