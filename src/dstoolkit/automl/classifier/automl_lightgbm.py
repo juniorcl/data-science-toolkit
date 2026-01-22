@@ -1,8 +1,16 @@
 import optuna
 import pandas as pd
 
-from . import utils
 from lightgbm import LGBMClassifier
+
+from dstoolkit.metrics import plots, scores
+from dstoolkit.model import analysis, interpretability
+
+from .utils import (
+    get_lightgbm_params_space,
+    get_classifier_function_score,
+    get_classifier_score,
+)
 
 
 class AutoMLLightGBM:
@@ -77,12 +85,12 @@ class AutoMLLightGBM:
         self.tune = tune
         self.n_trials = n_trials
         self.random_state = random_state
-        self.scorer = utils.get_classifier_score(scoring)
-        self.func_metric = utils.get_classifier_function_score(scoring)
+        self.scorer = get_classifier_score(scoring)
+        self.func_metric = get_classifier_function_score(scoring)
 
     def _get_best_params(self):
         def objective(trial):
-            params = utils.get_lightgbm_params_space(trial, self.random_state)
+            params = get_lightgbm_params_space(trial, self.random_state)
             model = LGBMClassifier(**params)
             model.fit(self.X_train, self.y_train[self.target])
             probs = model.predict_proba(self.X_valid)[:, 1]
@@ -94,7 +102,11 @@ class AutoMLLightGBM:
         return study.best_params
 
     def _fit(self):
-        self.best_params = self._get_best_params() if self.tune else {"random_state": self.random_state, "verbose": -1}
+        self.best_params = (
+            self._get_best_params() 
+            if self.tune 
+            else {"random_state": self.random_state, "verbose": -1}
+        )
         self.model = LGBMClassifier(**self.best_params)
 
         self.model.fit(
@@ -107,9 +119,9 @@ class AutoMLLightGBM:
             y['prob'] = self.model.predict_proba(X)[:, 1]
 
         self.results = {
-            'Train': utils.get_classifier_metrics(self.y_train, target=self.target, pred_col='pred', prob_col='prob'),
-            'Valid': utils.get_classifier_metrics(self.y_valid, target=self.target, pred_col='pred', prob_col='prob'),
-            'Test': utils.get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
+            'Train': scores.get_classifier_metrics(self.y_train, target=self.target, pred_col='pred', prob_col='prob'),
+            'Valid': scores.get_classifier_metrics(self.y_valid, target=self.target, pred_col='pred', prob_col='prob'),
+            'Test': scores.get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
         }
         return self.model, self.results
 
@@ -126,11 +138,11 @@ class AutoMLLightGBM:
         return self.results
 
     def analyze(self):
-        utils.plot_roc_curve(self.y_test, self.target, 'prob')
-        utils.plot_ks_curve(self.y_test, self.target)
-        utils.plot_precision_recall_curve(self.y_test, self.target, 'prob')
-        utils.plot_calibration_curve(self.y_test, self.target, strategy='uniform')
-        utils.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
-        utils.plot_feature_importance(self.model)
-        utils.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
-        utils.plot_shap_summary(self.model, self.X_train)
+        plots.plot_roc_curve(self.y_test[self.target], self.y_test["prob"])
+        plots.plot_ks_curve(self.y_test[self.target], self.y_test["prob"])
+        plots.plot_precision_recall_curve(self.y_test[self.target], self.y_test["prob"])
+        plots.plot_calibration_curve(self.y_test[self.target], self.y_test["prob"], strategy="uniform")
+        analysis.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        interpretability.plot_feature_importance(self.model)
+        interpretability.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        interpretability.plot_shap_tree_summary(self.model, self.X_train)
