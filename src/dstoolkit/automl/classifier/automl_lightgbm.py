@@ -1,10 +1,11 @@
 import optuna
+
 import pandas as pd
 
 from lightgbm import LGBMClassifier
 
-from dstoolkit.metrics import plots, scores
 from dstoolkit.model import analysis, interpretability
+from dstoolkit.metrics import plots, scores
 
 from .utils import (
     get_lightgbm_params_space,
@@ -114,14 +115,18 @@ class AutoMLLightGBM:
             eval_set=[(self.X_valid, self.y_valid[self.target])]
         )
 
-        for X, y in [(self.X_train, self.y_train), (self.X_valid, self.y_valid), (self.X_test, self.y_test)]:
+        for X, y in [
+            (self.X_train, self.y_train), 
+            (self.X_valid, self.y_valid), 
+            (self.X_test, self.y_test)
+        ]:
             y['pred'] = self.model.predict(X)
             y['prob'] = self.model.predict_proba(X)[:, 1]
 
         self.results = {
-            'Train': scores.get_classifier_metrics(self.y_train, target=self.target, pred_col='pred', prob_col='prob'),
-            'Valid': scores.get_classifier_metrics(self.y_valid, target=self.target, pred_col='pred', prob_col='prob'),
-            'Test': scores.get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
+            "Train": scores.get_classifier_metrics(self.y_train[self.target], self.y_train["pred"], self.y_train["prob"]),
+            "Valid": scores.get_classifier_metrics(self.y_valid[self.target], self.y_valid["pred"], self.y_valid["prob"]),
+            "Test": scores.get_classifier_metrics(self.y_test[self.target], self.y_test["pred"], self.y_test["prob"]),
         }
         return self.model, self.results
 

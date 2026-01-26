@@ -1,9 +1,10 @@
 import optuna
-import pandas as pd
-from sklearn.ensemble import HistGradientBoostingClassifier
 
-from dstoolkit.metrics import plots, scores
+import pandas as pd
+
 from dstoolkit.model import analysis, interpretability
+from sklearn.ensemble import HistGradientBoostingClassifier
+from dstoolkit.metrics import plots, scores
 
 from .utils import (
     get_classifier_function_score,
@@ -120,15 +121,9 @@ class AutoMLHistGradientBoosting:
             y["prob"] = self.model.predict_proba(X)[:, 1]
 
         self.results = {
-            "Train": scores.get_classifier_metrics(
-                self.y_train, target=self.target, pred_col="pred", prob_col="prob"
-            ),
-            "Valid": scores.get_classifier_metrics(
-                self.y_valid, target=self.target, pred_col="pred", prob_col="prob"
-            ),
-            "Test": scores.get_classifier_metrics(
-                self.y_test, target=self.target, pred_col="pred", prob_col="prob"
-            ),
+            "Train": scores.get_classifier_metrics(self.y_train[self.target], self.y_train["pred"], self.y_train["prob"]),
+            "Valid": scores.get_classifier_metrics(self.y_valid[self.target], self.y_valid["pred"], self.y_valid["prob"]),
+            "Test": scores.get_classifier_metrics(self.y_test[self.target], self.y_test["pred"], self.y_test["prob"]),
         }
         return self.model, self.results
 

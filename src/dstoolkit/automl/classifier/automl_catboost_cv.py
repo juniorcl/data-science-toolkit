@@ -1,11 +1,13 @@
-import numpy as np
 import optuna
-import pandas as pd
-from catboost import CatBoostClassifier
-from sklearn.model_selection import cross_validate
 
-from dstoolkit.metrics import plots, scores
+import numpy as np
+import pandas as pd
+
+from catboost import CatBoostClassifier
+
 from dstoolkit.model import analysis, interpretability
+from dstoolkit.metrics import plots, scores
+from sklearn.model_selection import cross_validate
 
 from .utils import (
     get_catboost_params_space,
@@ -82,9 +84,7 @@ class AutoMLCatBoostCV:
     >>> predictions = obj.model.predict(X_test)
     """
 
-    def __init__(
-        self, scoring="roc_auc", cv=3, tune=False, n_trials=50, random_state=42
-    ):
+    def __init__(self, scoring="roc_auc", cv=3, tune=False, n_trials=50, random_state=42):
         self.cv = cv
         self.tune = tune
         self.n_trials = n_trials
@@ -154,9 +154,7 @@ class AutoMLCatBoostCV:
         self.y_test["pred"] = self.model.predict(self.X_test)
         self.y_test["prob"] = self.model.predict_proba(self.X_test)[:, 1]
 
-        self.results["Test"] = scores.get_classifier_metrics(
-            self.y_test, target=self.target, pred_col="pred", prob_col="prob"
-        )
+        self.results["Test"] = scores.get_classifier_metrics(self.y_test[self.target], self.y_test["pred"], self.y_test["prob"])
         return self.model, self.results
 
     def train(self, X_train, y_train, X_test, y_test, target="target"):
@@ -175,14 +173,8 @@ class AutoMLCatBoostCV:
         plots.plot_roc_curve(self.y_test[self.target], self.y_test["prob"])
         plots.plot_ks_curve(self.y_test[self.target], self.y_test["prob"])
         plots.plot_precision_recall_curve(self.y_test[self.target], self.y_test["prob"])
-        plots.plot_calibration_curve(
-            self.y_test[self.target], self.y_test["prob"], strategy="uniform"
-        )
-        analysis.plot_learning_curve(
-            self.model, self.X_train, self.y_train[self.target], scoring=self.scorer
-        )
+        plots.plot_calibration_curve(self.y_test[self.target], self.y_test["prob"], strategy="uniform")
+        analysis.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
         interpretability.plot_feature_importance(self.model)
-        interpretability.plot_permutation_importance(
-            self.model, self.X_train, self.y_train[self.target], scoring=self.scorer
-        )
+        interpretability.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
         interpretability.plot_shap_tree_summary(self.model, self.X_train)

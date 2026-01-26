@@ -153,7 +153,7 @@ class AutoMLHistGradientBoostingCV:
         self.y_test['pred'] = self.model.predict(self.X_test)
         self.y_test['prob'] = self.model.predict_proba(self.X_test)[:, 1]
 
-        self.results['Test'] = scores.get_classifier_metrics(self.y_test, target=self.target, pred_col='pred', prob_col='prob')
+        self.results['Test'] = scores.get_classifier_metrics(self.y_test[self.target], self.y_test["pred"], self.y_test["prob"])
         return self.model, self.results
 
     def train(self, X_train, y_train, X_test, y_test, target='target'):
