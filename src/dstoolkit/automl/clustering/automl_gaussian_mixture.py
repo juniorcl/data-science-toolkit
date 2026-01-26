@@ -1,8 +1,16 @@
 import optuna
 import pandas as pd
 
-from . import utils
 from sklearn.mixture import GaussianMixture
+
+from dstoolkit.model import analysis
+from dstoolkit.metrics import scores
+
+from .utils import (
+    get_cluster_score,
+    get_cluster_function_score,
+    get_gaussian_mixture_params_space,
+)
 
 
 class AutoMLGaussianMixture:
@@ -53,12 +61,12 @@ class AutoMLGaussianMixture:
     def __init__(self, scoring='silhouette', n_trials=50, random_state=42):
         self.n_trials = n_trials
         self.random_state = random_state
-        self.scorer = utils.get_cluster_score(scoring)
-        self.func_metric = utils.get_cluster_function_score(scoring)
+        self.scorer = get_cluster_score(scoring)
+        self.func_metric = get_cluster_function_score(scoring)
 
     def _get_best_params(self, X):
         def objective(trial):
-            params = utils.get_gaussian_mixture_params_space(trial, self.random_state)
+            params = get_gaussian_mixture_params_space(trial, self.random_state)
             model = GaussianMixture(**params)
             labels = model.fit_predict(X)
             return self.func_metric(X, labels)
@@ -73,7 +81,7 @@ class AutoMLGaussianMixture:
         self.best_params = self._get_best_params(X)
         self.model = GaussianMixture(**self.best_params)
         self.labels = self.model.fit_predict(X)
-        self.results = {'Train': utils.get_cluster_metrics(X, self.labels)}
+        self.results = {'Train': scores.get_cluster_metrics(X, self.labels)}
         return self
 
     def fit(self, X):
@@ -86,9 +94,9 @@ class AutoMLGaussianMixture:
         return self.results
 
     def analyze(self, X_orig):
-        utils.plot_cluster_sizes(self.labels)
-        utils.plot_silhouette_analysis(self.X, self.labels)
-        utils.plot_kdeplots_by_cluster(X_orig, self.labels)
-        utils.plot_tree_ovr(X_orig, self.labels)
-        utils.plot_cluster_pca(self.X, self.labels)
-        utils.plot_cluster_umap(self.X, self.labels)
+        analysis.plot_cluster_sizes(self.labels)
+        analysis.plot_silhouette_analysis(self.X, self.labels)
+        analysis.plot_kdeplots_by_cluster(X_orig, self.labels)
+        analysis.plot_tree_ovr(X_orig, self.labels)
+        analysis.plot_pca_projection(self.X, self.labels)
+        analysis.plot_umap_projection(self.X, self.labels)

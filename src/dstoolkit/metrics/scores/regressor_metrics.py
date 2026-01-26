@@ -8,7 +8,7 @@ from sklearn.metrics import (
 )
 
 
-def get_regressor_metrics(y, target, pred_col="pred"):
+def get_regressor_metrics(y_true, y_score):
     """
     Calculate various regression metrics between true and predicted values.
 
@@ -37,13 +37,12 @@ def get_regressor_metrics(y, target, pred_col="pred"):
     KeyError
         If `pred_col` or `target` are not found in the DataFrame `y`.
     """
-    y_true = y[target]
-    y_pred = y[pred_col]
+
     return {
-        'R2': r2_score(y_true, y_pred),
-        'MAE': mean_absolute_error(y_true, y_pred),
-        'MadAE': median_absolute_error(y_true, y_pred),
-        'MAPE': mean_absolute_percentage_error(y_true, y_pred),
-        'RMSE': root_mean_squared_error(y_true, y_pred),
-        'Explained Variance': explained_variance_score(y_true, y_pred)
+        'R2': r2_score(y_true, y_score),
+        'MAE': mean_absolute_error(y_true, y_score),
+        'MadAE': median_absolute_error(y_true, y_score),
+        'MAPE': mean_absolute_percentage_error(y_true, y_score),
+        'RMSE': root_mean_squared_error(y_true, y_score),
+        'Explained Variance': explained_variance_score(y_true, y_score)
     }

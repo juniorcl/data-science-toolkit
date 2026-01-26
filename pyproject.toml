@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dstoolkit"
-version = "0.9.3"
+version = "0.9.5"
 description = "Data Science Toolkit"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,7 +15,7 @@ authors = [
 dependencies = [
     "numpy",
     "pandas",
-    "scikit-learn",
+    "scikit-learn==1.6.0",
     "lightgbm==4.6.0",
     "catboost==1.2.8",
     "numba==0.62.1",
@@ -25,6 +25,7 @@ dependencies = [
     "optuna>=4.6.0",
     "shap>=0.49.1",
     "seaborn>=0.13.2",
+    "jupyterlab>=4.5.2",
 ]
 
 

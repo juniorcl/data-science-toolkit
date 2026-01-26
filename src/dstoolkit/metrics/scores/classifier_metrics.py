@@ -1,16 +1,18 @@
-from .ks_score import ks_score
 from sklearn.metrics import (
     balanced_accuracy_score,
+    brier_score_loss,
+    f1_score,
+    log_loss,
     precision_score,
     recall_score,
-    f1_score,
     roc_auc_score,
-    brier_score_loss,
-    log_loss
 )
 
+from .average_precision_lift_score import average_precision_lift_score
+from .ks_score import ks_score
 
-def get_classifier_metrics(y, target, pred_col="pred", prob_col="prob"):
+
+def get_classifier_metrics(y_true, y_pred, y_score):
     """
     Calculate a set of classification metrics.
 
@@ -39,23 +41,22 @@ def get_classifier_metrics(y, target, pred_col="pred", prob_col="prob"):
         - 'KS'
         - 'Brier'
         - 'LogLoss'
+        - 'Average Precision Lift'
 
     Raises
     ------
     ValueError
         If the input data is not valid for classification.
     """
-    y_true = y[target]
-    y_pred = y[pred_col]
-    y_prob = y[prob_col]
-    
+
     return {
-        'Balanced Accuracy': balanced_accuracy_score(y_true, y_pred),
-        'Precision': precision_score(y_true, y_pred),
-        'Recall': recall_score(y_true, y_pred),
-        'F1': f1_score(y_true, y_pred),
-        'AUC': roc_auc_score(y_true, y_prob),
-        'KS': ks_score(y_true, y_prob),
-        'Brier': brier_score_loss(y_true, y_prob),
-        'LogLoss': log_loss(y_true, y_prob)
+        "Balanced Accuracy": balanced_accuracy_score(y_true, y_pred),
+        "Precision": precision_score(y_true, y_pred),
+        "Recall": recall_score(y_true, y_pred),
+        "F1": f1_score(y_true, y_pred),
+        "AUC": roc_auc_score(y_true, y_score),
+        "KS": ks_score(y_true, y_score),
+        "Brier": brier_score_loss(y_true, y_score),
+        "LogLoss": log_loss(y_true, y_score),
+        "Avg Precision Lift": average_precision_lift_score(y_true, y_score),
     }
