@@ -1,8 +1,16 @@
 import optuna
 import pandas as pd
 
-from . import utils
 from lightgbm import LGBMRegressor
+
+from dstoolkit.model import analysis, interpretability
+from dstoolkit.metrics import scores
+
+from .utils import (
+    get_regressor_score,
+    get_lightgbm_params_space,
+    get_regressor_function_score,
+)
 
 
 class AutoMLLightGBM:
@@ -57,12 +65,12 @@ class AutoMLLightGBM:
         self.target = target
         self.n_trials = n_trials
         self.random_state = random_state
-        self.scorer = utils.get_regressor_score(scoring)
-        self.func_metric = utils.get_regressor_function_score(scoring)
+        self.scorer = get_regressor_score(scoring)
+        self.func_metric = get_regressor_function_score(scoring)
 
     def _get_best_params(self):
         def objective(trial):
-            params = utils.get_lightgbm_params_space(trial, self.random_state)
+            params = get_lightgbm_params_space(trial, self.random_state)
             model = LGBMRegressor(**params)
             model.fit(self.X_train, self.y_train[self.target])
             preds = model.predict(self.X_valid)
@@ -74,7 +82,11 @@ class AutoMLLightGBM:
         return study.best_params
     
     def _fit(self):
-        params = self._get_best_params() if self.tune else {"random_state": self.random_state, "verbosity": -1}
+        params = (
+            self._get_best_params() 
+            if self.tune 
+            else {"random_state": self.random_state, "verbosity": -1}
+        )
         model = LGBMRegressor(**params)
 
         model.fit(self.X_train, self.y_train[self.target], eval_set=[(self.X_valid, self.y_valid[self.target])])
@@ -84,9 +96,9 @@ class AutoMLLightGBM:
         self.y_test['pred'] = model.predict(self.X_test)
 
         results = {
-            'Train': utils.get_regressor_metrics(self.y_train, target=self.target, pred_col='pred'),
-            'Valid': utils.get_regressor_metrics(self.y_valid, target=self.target, pred_col='pred'),
-            'Test': utils.get_regressor_metrics(self.y_test, target=self.target, pred_col='pred')
+            'Train': scores.get_regressor_metrics(self.y_train[self.target], self.y_train['pred']),
+            'Valid': scores.get_regressor_metrics(self.y_valid[self.target], self.y_valid['pred']),
+            'Test': scores.get_regressor_metrics(self.y_test[self.target], self.y_test['pred']),
         }
         return model, results
 
@@ -102,10 +114,9 @@ class AutoMLLightGBM:
         return self.results
 
     def analyze(self):
-        utils.plot_residuals(self.y_test, 'pred', self.target)
-        utils.plot_pred_vs_true(self.y_test, 'pred', self.target)
-        utils.plot_error_by_quantile(self.y_test, 'pred', self.target)
-        utils.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
-        utils.plot_feature_importance(self.model)
-        utils.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
-        utils.plot_shap_summary(self.model, self.X_train)
+        analysis.plot_waste_distribution(self.y_test[self.target], self.y_test['pred'])
+        analysis.plot_error_by_quantile(self.y_test[self.target], self.y_test['pred'])
+        analysis.plot_learning_curve(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        interpretability.plot_feature_importance(self.model)
+        interpretability.plot_permutation_importance(self.model, self.X_train, self.y_train[self.target], scoring=self.scorer)
+        interpretability.plot_shap_tree_summary(self.model, self.X_train)
