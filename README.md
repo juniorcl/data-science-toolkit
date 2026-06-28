@@ -69,17 +69,22 @@ src/dstoolkit/
 
 Example notebooks demonstrating usage can be found in the `notebooks/` directory.
 
-## Instalation
+## Installation
+
+`dstoolkit` is currently in active development. You can install it either from the TestPyPI repository or locally for development purposes.
+
+### 1. Stable/Development Release (via TestPyPI)
+
+To install the latest pre-release along with all required data science dependencies, run:
 
 ```bash
-pip install -r requirements.txt
+uv pip install --index-url [https://test.pypi.org/simple/](https://test.pypi.org/simple/) --extra-index-url [https://pypi.org/simple/](https://pypi.org/simple/) dstoolkit
 ```
 
-Or, for development:
-
+### 2. Locally (Using uv)
 
 ```bash
-pip install -e .
+uv pip install -e .
 ```
 
 ## Quick Example
