@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def plot_probability_density_distribution(y_true, y_score, ax=None):
+def plot_probability_density_distribution(y_true, y_score, kde=False, ax=None):
     """
     Plots the KDE and histogram distribution of predicted probabilities
     separated by the true target class (0 vs 1), matching the style of image_1.png.
@@ -14,6 +14,8 @@ def plot_probability_density_distribution(y_true, y_score, ax=None):
         True binary labels (0 or 1).
     y_score : array-like of shape (n_samples,)
         Predicted probabilities for the positive class.
+    kde : bool, optional
+        If True, plots the KDE curve. If False, plots the histogram.
     ax : matplotlib.axes.Axes, optional
         Matplotlib Axes object to plot on. If None, a new figure is created.
 
@@ -53,7 +55,7 @@ def plot_probability_density_distribution(y_true, y_score, ax=None):
         # Plot Histogram + Smoothed KDE, adding classic pyplot style details
         sns.histplot(
             x=scores_target,
-            kde=True,
+            kde=kde,
             ax=ax,
             color=colors[target_val],
             label=f"{labels[target_val]} (n={len(scores_target):,})",
@@ -62,7 +64,7 @@ def plot_probability_density_distribution(y_true, y_score, ax=None):
             alpha=0.6,            # Set transparency to match the overlay feel
             edgecolor="black",    # Add sharp black outlines like in image_1.png
             linewidth=0.5,        # Thin outlines
-            line_kws={"linewidth": 2.5, "color": colors[target_val]}  # Use specific class color for the KDE line
+            line_kws={"linewidth": 2.0, "color": colors[target_val]}  # Use specific class color for the KDE line
         )
 
     # --- Match the specific chart labels and style ---
@@ -94,6 +96,90 @@ def plot_probability_density_distribution(y_true, y_score, ax=None):
     )
 
     # 6. Sharp frame/border for the entire plot
+    ax.spines['top'].set_visible(True)
+    ax.spines['right'].set_visible(True)
+    ax.spines['bottom'].set_visible(True)
+    ax.spines['left'].set_visible(True)
+
+    for spine in ax.spines.values():
+        spine.set_edgecolor('black')
+        spine.set_linewidth(1.0)
+
+    return fig, ax
+
+
+def plot_kde_density_distribution(y_true, y_score, ax=None):
+    """
+    Plots exclusively the smooth KDE distribution curves of predicted probabilities
+    separated by the true target class (0 vs 1).
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True binary labels (0 or 1).
+    y_score : array-like of shape (n_samples,)
+        Predicted probabilities for the positive class.
+    ax : matplotlib.axes.Axes, optional
+        Matplotlib Axes object to plot on. If None, a new figure is created.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    ax : matplotlib.axes.Axes
+    """
+
+    y_true = np.asarray(y_true)
+    y_score = np.asarray(y_score)
+
+    if set(np.unique(y_true)) - {0, 1}:
+        raise ValueError("y_true variable must contain only 0 or 1 values.")
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6), dpi=100)
+    else:
+        fig = ax.figure
+    
+    colors = {0: "C0", 1: "C1"}
+    labels = {0: "Target 0", 1: "Target 1"}
+
+    for target_val in [1, 0]: # Target 1 first so Target 0 sits on top
+        mask = (y_true == target_val)
+        scores_target = y_score[mask]
+        
+        if len(scores_target) == 0:
+            continue
+
+        sns.kdeplot(
+            x=scores_target,
+            ax=ax,
+            color=colors[target_val],
+            label=f"{labels[target_val]} (n={len(scores_target):,})",
+            common_norm=False,   # Classes don't flatten each other
+            linewidth=1.0,       # Smooth thick line
+            fill=True           # Ensures no color underneath the curve
+        )
+
+    ax.set_title("Probability KDE Distribution per Target Class", fontsize=16, fontweight='normal', pad=15)
+    ax.set_xlabel("Predicted Probability (Score)", fontsize=14)
+    ax.set_ylabel("Density", fontsize=14)
+    
+    ax.set_xlim(0, 1) 
+    xticks = np.arange(0.0, 1.1, 0.1)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([f"{x:.1f}" for x in xticks], fontsize=12)
+    ax.tick_params(axis='y', labelsize=12)
+
+    ax.grid(axis='both', which='major', color='#E0E0E0', linestyle='-', linewidth=0.5)
+    ax.set_axisbelow(True) 
+
+    ax.legend(
+        loc="best",
+        fontsize=11, 
+        frameon=True, 
+        framealpha=1, 
+        edgecolor="gray"
+    )
+
     ax.spines['top'].set_visible(True)
     ax.spines['right'].set_visible(True)
     ax.spines['bottom'].set_visible(True)
