@@ -1,6 +1,9 @@
 from .tree_ovr import plot_tree_ovr
 from .tree_ovo import plot_tree_ovo
 
+from .lift_score import plot_lift_score_by_bins, plot_lift_curve
+from .probability_density_distribution import plot_probability_density_distribution, plot_kde_density_distribution
+
 from .cluster_size import plot_cluster_sizes
 from .learning_curve import plot_learning_curve
 from .pca_projection import plot_pca_projection
@@ -18,14 +21,17 @@ from .numerical_variables_distribution_by_cluster import plot_numerical_variable
 __all__ = [
     "plot_tree_ovr",
     "plot_tree_ovo",
+    "plot_lift_score_by_bins",
+    "plot_lift_curve",
     "plot_cluster_sizes",
     "plot_learning_curve",
     "plot_pca_projection",
-    "plot_residuals",
     "plot_umap_projection",
     "plot_error_by_quantile",
     "plot_waste_distribution",
     "plot_silhouette_analysis",
     "plot_kdeplots_by_cluster",
+    "plot_probability_density_distribution",
+    "plot_kde_density_distribution",
     "plot_numerical_variables_distribution_by_cluster",
 ]

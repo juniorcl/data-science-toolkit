@@ -1,6 +1,6 @@
 import dstoolkit
 
-__version__ = "0.9.6"
+__version__ = "0.11.0"
 
 __all__ = [
     "dstoolkit",
