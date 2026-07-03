@@ -798,20 +798,24 @@ wheels = [
 
 [[package]]
 name = "dstoolkit"
-version = "0.10.0"
+version = "0.11.0"
 source = { editable = "." }
 dependencies = [
     { name = "catboost" },
+    { name = "coverage" },
     { name = "jupyterlab" },
     { name = "lightgbm" },
     { name = "llvmlite" },
+    { name = "matplotlib" },
     { name = "numba" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "optuna" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pandas", version = "3.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pyparsing" },
     { name = "pytest" },
+    { name = "pytest-cov" },
     { name = "scikit-learn" },
     { name = "seaborn" },
     { name = "shap", version = "0.49.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -829,15 +833,19 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "catboost", specifier = "==1.2.8" },
+    { name = "coverage", specifier = ">=7.14.1" },
     { name = "jupyterlab", specifier = ">=4.5.2" },
     { name = "lightgbm", specifier = "==4.6.0" },
     { name = "llvmlite", specifier = "==0.45.1" },
+    { name = "matplotlib", specifier = ">=3.10.9" },
     { name = "numba", specifier = "==0.62.1" },
     { name = "numpy" },
     { name = "optuna", specifier = ">=4.6.0" },
     { name = "pandas" },
+    { name = "pyparsing", specifier = ">=3.3.2" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest", marker = "extra == 'dev'" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "scikit-learn", specifier = "==1.6.0" },
     { name = "seaborn", specifier = ">=0.13.2" },
